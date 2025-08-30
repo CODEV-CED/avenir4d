@@ -1,0 +1,80 @@
+[
+  {
+    "id": "but_info_lyon1",
+    "nom": "BUT Informatique",
+    "type": "BUT",
+    "duree": 3,
+    "etablissement": "IUT Lyon 1",
+    "ville": "Villeurbanne",
+    "plaisir_tags": ["algorithmique", "projets", "code"],
+    "competence_tags": ["programmation", "maths", "bases_de_donnees"],
+    "utilite_tags": ["numerique", "developpement", "emploi"],
+    "viabilite_data": { "taux_acces": 0.55, "cout": "gratuit" },
+    "confidence": 0.9
+  },
+  {
+    "id": "but_gea_paris_rives",
+    "nom": "BUT GEA",
+    "type": "BUT",
+    "duree": 3,
+    "etablissement": "IUT Paris - Rives de Seine",
+    "ville": "Paris",
+    "plaisir_tags": ["analyse", "projets", "groupe"],
+    "competence_tags": ["maths", "gestion", "bureautique"],
+    "utilite_tags": ["gestion", "entreprise", "emploi"],
+    "viabilite_data": { "taux_acces": 0.6, "cout": "gratuit" },
+    "confidence": 0.88
+  },
+  {
+    "id": "bts_com_pt",
+    "nom": "BTS Communication",
+    "type": "BTS",
+    "duree": 2,
+    "etablissement": "Lycée Public Toulouse",
+    "ville": "Toulouse",
+    "plaisir_tags": ["créa", "projets", "groupe"],
+    "competence_tags": ["communication", "organisation"],
+    "utilite_tags": ["marketing", "contenu"],
+    "viabilite_data": { "taux_acces": 0.65, "cout": "gratuit" },
+    "confidence": 0.85
+  },
+  {
+    "id": "lic_eco_nanterre",
+    "nom": "Licence Économie",
+    "type": "LICENCE",
+    "duree": 3,
+    "etablissement": "Université Paris Nanterre",
+    "ville": "Nanterre",
+    "plaisir_tags": ["analyse", "lecture"],
+    "competence_tags": ["maths", "statistiques"],
+    "utilite_tags": ["économie", "entreprise"],
+    "viabilite_data": { "taux_acces": 0.5, "cout": "gratuit" },
+    "confidence": 0.86
+  },
+  {
+    "id": "ecole_inge_generic",
+    "nom": "École d’Ingénieurs (prépa intégrée)",
+    "type": "ECOLE_ING",
+    "duree": 5,
+    "etablissement": "École Ingé Atlantique",
+    "ville": "Nantes",
+    "plaisir_tags": ["projets", "tech"],
+    "competence_tags": ["maths", "physique"],
+    "utilite_tags": ["ingénierie", "industrie"],
+    "viabilite_data": { "taux_acces": 0.35, "cout": "modere" },
+    "confidence": 0.82
+  },
+  {
+    "id": "arts_graph_bdx",
+    "nom": "École d’Arts Graphiques",
+    "type": "ARTS",
+    "duree": 3,
+    "etablissement": "École Créa Bordeaux",
+    "ville": "Bordeaux",
+    "plaisir_tags": ["graphisme", "ux_ui", "video"],
+    "competence_tags": ["design", "illustration"],
+    "utilite_tags": ["création", "contenu"],
+    "viabilite_data": { "taux_acces": 0.4, "cout": "eleve" },
+    "confidence": 0.8
+  }
+]
