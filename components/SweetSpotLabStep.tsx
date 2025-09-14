@@ -6,6 +6,7 @@ import EurekaFX from '@/components/EurekaFX';
 import AutoAdjustBanner from '@/components/AutoAdjustBanner';
 import IkigaiLegend from '@/components/IkigaiLegend';
 import { TooltipProvider } from '@/components/UI/tooltip';
+import IkigaiCanvas from '@/components/IkigaiCanvas';
 
 export default function SweetSpotLabStep() {
   const {
@@ -113,7 +114,11 @@ export default function SweetSpotLabStep() {
 
       {/* Légende + Canvas */}
       <TooltipProvider delayDuration={150}>
-        <IkigaiLegend className="mb-3" />
+        <IkigaiLegend className="mb-1" />
+        <p className="mb-3 text-xs text-gray-500">
+          Cliquez pour filtrer. Réinitialiser pour tout afficher.
+        </p>
+        <IkigaiCanvas />
       </TooltipProvider>
 
       {isLoading ? (
