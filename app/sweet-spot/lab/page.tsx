@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import SweetSpotLabStep from '@/components/SweetSpotLabStep';
 import IkigaiCanvas from '@/components/IkigaiCanvas';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 import SweetSpotLabSkeleton from '@/components/skeletons/SweetSpotLabSkeleton';
 import { useSJTProfile } from '@/hooks/useSJTProfile';
 import { useSweetSpotStore } from '@/store/useSweetSpotStore';
@@ -19,6 +20,7 @@ export default function SweetSpotLabPage() {
 }
 
 function SweetSpotLabInner() {
+  const isClient = useIsClient();
   const params = useSearchParams();
   const queryId = params ? params.get('profile') : null;
   const localId = typeof window !== 'undefined' ? localStorage.getItem('sjtProfileId') : null;
@@ -50,6 +52,11 @@ function SweetSpotLabInner() {
   }, [error]);
 
   // --- Clauses de garde (Guard Clauses) ---
+
+  // 0. Hydratation: même markup avant/après → skeleton jusqu'à prêt client
+  if (!isClient) {
+    return <SweetSpotLabSkeleton />;
+  }
 
   // 1. Pas d'ID
   if (!id) {
