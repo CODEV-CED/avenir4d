@@ -4,6 +4,8 @@ import { useSweetSpotStore } from '@/store/useSweetSpotStore';
 import DimensionSlider from '@/components/DimensionSlider';
 import EurekaFX from '@/components/EurekaFX';
 import AutoAdjustBanner from '@/components/AutoAdjustBanner';
+import IkigaiLegend from '@/components/IkigaiLegend';
+import { TooltipProvider } from '@/components/UI/tooltip';
 
 export default function SweetSpotLabStep() {
   const {
@@ -108,6 +110,11 @@ export default function SweetSpotLabStep() {
           pulse={autoAdjustedKey === 'viabilite' && !!autoAdjustSeq}
         />
       </div>
+
+      {/* Légende + Canvas */}
+      <TooltipProvider delayDuration={150}>
+        <IkigaiLegend className="mb-3" />
+      </TooltipProvider>
 
       {isLoading ? (
         <p>🔄 Analyse en cours…</p>

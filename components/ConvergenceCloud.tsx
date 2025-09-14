@@ -48,10 +48,12 @@ export default function ConvergenceCloud({
   const items = useMemo(() => {
     const list = Array.isArray(convergences) ? convergences : [];
     const filtered = active.length
-      ? list.filter((c) => c.matchedDimensions.some((d) => {
-          const k = normDim(String(d));
-          return k ? active.includes(k) : false;
-        }))
+      ? list.filter((c) =>
+          c.matchedDimensions.some((d) => {
+            const k = normDim(String(d));
+            return k ? active.includes(k) : false;
+          }),
+        )
       : list;
 
     const top = [...filtered]
@@ -66,9 +68,15 @@ export default function ConvergenceCloud({
       const y = Math.sin(a) * r;
       const scale = 0.9 + c.strength * 0.5; // 0.9 → 1.4
       const opacity = 0.6 + c.strength * 0.4; // 0.6 → 1.0
-      const dims = DIM_KEYS.filter((k) => c.matchedDimensions.some((d) => normDim(String(d)) === k));
+      const dims = DIM_KEYS.filter((k) =>
+        c.matchedDimensions.some((d) => normDim(String(d)) === k),
+      );
       return { ...c, x, y, scale, opacity, dims } as StoreConvergence & {
-        x: number; y: number; scale: number; opacity: number; dims: DimKey[];
+        x: number;
+        y: number;
+        scale: number;
+        opacity: number;
+        dims: DimKey[];
       };
     });
   }, [convergences, active, max, baseRadius, minRadius]);
@@ -89,7 +97,7 @@ export default function ConvergenceCloud({
               <TooltipTrigger asChild>
                 <span
                   className={[
-                    'select-none rounded-full px-2.5 py-1 text-xs font-medium shadow ring-1',
+                    'rounded-full px-2.5 py-1 text-xs font-medium shadow ring-1 select-none',
                     c.boosted
                       ? 'bg-emerald-600/90 text-white ring-white/15'
                       : 'bg-white/85 text-gray-900 ring-black/10',
@@ -98,7 +106,10 @@ export default function ConvergenceCloud({
                   {c.keyword}
                   <span className="ml-2 inline-flex items-center gap-1 align-middle">
                     {(c as any).dims?.map((d: DimKey) => (
-                      <i key={`${c.keyword}-${d}`} className={`inline-block h-1.5 w-1.5 rounded-full ${DOT[d]}`} />
+                      <i
+                        key={`${c.keyword}-${d}`}
+                        className={`inline-block h-1.5 w-1.5 rounded-full ${DOT[d]}`}
+                      />
                     ))}
                   </span>
                 </span>
