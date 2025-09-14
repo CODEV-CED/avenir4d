@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSweetSpotStore } from '@/store/useSweetSpotStore';
 import DimensionSlider from '@/components/DimensionSlider';
 import EurekaFX from '@/components/EurekaFX';
+import AutoAdjustBanner from '@/components/AutoAdjustBanner';
 
 export default function SweetSpotLabStep() {
   const {
@@ -50,6 +51,7 @@ export default function SweetSpotLabStep() {
 
   return (
     <div className="p-6">
+      <AutoAdjustBanner />
       <h2 className="mb-4 text-xl font-bold">🎯 Sweet Spot Lab</h2>
 
       {/* ✅ Toggle Boost */}

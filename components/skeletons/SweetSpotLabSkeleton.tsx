@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { Skeleton } from '@/components/UI/skeleton';
 
 export default function SweetSpotLabSkeleton() {
