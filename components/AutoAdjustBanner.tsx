@@ -35,7 +35,7 @@ export default function AutoAdjustBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -12, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-          className="fixed right-4 top-4 z-[60] rounded-lg bg-[var(--ny-panel)]/90 px-3 py-2 text-xs text-white shadow-lg ring-1 ring-white/10 backdrop-blur"
+          className="fixed top-4 right-4 z-[60] rounded-lg bg-[var(--ny-panel)]/90 px-3 py-2 text-xs text-white shadow-lg ring-1 ring-white/10 backdrop-blur"
           role="status"
           aria-live="polite"
         >

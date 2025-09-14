@@ -70,9 +70,9 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
     const prevVal = prev[dimension];
 
     const lower = dimension === 'viabilite' ? 0.15 : 0;
-    const others = (Object.entries(prev)
+    const others = Object.entries(prev)
       .filter(([k]) => k !== dimension)
-      .map(([, v]) => v)) as number[];
+      .map(([, v]) => v) as number[];
     const minOther = Math.min(...others);
     const maxOther = Math.max(...others);
 
@@ -83,11 +83,23 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
     const beforeClamp = nextVal;
     nextVal = clamp(nextVal, allowedMin, allowedMax);
 
-    let evt: null | { at: number; type: 'gap' | 'viabilityMin' | 'clamp'; adjusted: { key: SliderKey; from: number; to: number } | null } = null;
+    let evt: null | {
+      at: number;
+      type: 'gap' | 'viabilityMin' | 'clamp';
+      adjusted: { key: SliderKey; from: number; to: number } | null;
+    } = null;
     if (dimension === 'viabilite' && nextVal !== rawValue && rawValue < 0.15) {
-      evt = { at: Date.now(), type: 'viabilityMin', adjusted: { key: 'viabilite', from: rawValue, to: nextVal } };
+      evt = {
+        at: Date.now(),
+        type: 'viabilityMin',
+        adjusted: { key: 'viabilite', from: rawValue, to: nextVal },
+      };
     } else if (nextVal !== beforeClamp) {
-      evt = { at: Date.now(), type: 'clamp', adjusted: { key: dimension, from: beforeClamp, to: nextVal } };
+      evt = {
+        at: Date.now(),
+        type: 'clamp',
+        adjusted: { key: dimension, from: beforeClamp, to: nextVal },
+      };
     }
 
     // 2) construit l’état
