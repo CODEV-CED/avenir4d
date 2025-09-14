@@ -1,0 +1,246 @@
+---
+applyTo: '**'
+---
+Provide project context and coding guidelines that AI should follow when generating code, answering questions, or reviewing changes.
+# Avenir 4D - Nouvelle Progression Sweet Spot Revolution
+*Intégration des spécifications techniques avancées avec l'intersection magique Ikigaï + IA*
+
+## 🔄 Analyse Comparative : V1 vs V2
+
+### Évolutions Majeures Identifiées
+- **SJT Enrichi** : 12 questions → 12 + 4 questions qualitatives + extraction sémantique
+- **Sweet Spot Engine** : Détection automatique des convergences inter-dimensions
+- **Projets Hybrides IA** : Génération de métiers innovants via Claude API
+- **Test VIBRANT** : Validation projets avec scoring sophistiqué (7 dimensions)
+- **Architecture Complexe** : Database enrichie + Services backend + API routes
+
+### Points de Continuité Conservés
+- Canvas Ikigaï interactif (sliders + contraintes)
+- Co-écriture PFM 4D collaborative
+- Export PDF final
+- Stack Next.js + Supabase + Tailwind
+
+---
+
+## 📋 Nouvelle Progression en 6 Batchs - Sweet Spot Revolution
+
+### **Batch 1 : SJT Enrichi + Base Architecture (Semaine 1)**
+**Objectif** : Poser les fondations avec test psychométrique avancé et extraction sémantique
+
+#### Développements Prioritaires
+```
+□ Setup Architecture Sweet Spot
+  ├─ Database schema enrichie (user_profiles avec JSONB)
+  ├─ Services backend (SweetSpotEngine, VIBRANTTestService)
+  └─ Store Zustand étendu (useSweetSpotStore)
+
+□ SJT Enrichi Complet
+  ├─ 12 questions SJT classiques → scores 4D
+  ├─ 4 questions qualitatives d'enrichissement :
+  │  • Test du Dimanche Matin (passions authentiques)
+  │  • Algorithme Personnel (historique TikTok/YouTube)
+  │  • Talent Reconnu (preuves compétences)
+  │  • Indignation Max (drivers utilité)
+  └─ Extraction keywords automatique par dimension
+
+□ Interface SJT Avancée
+  ├─ Composant SJTStep enrichi
+  ├─ Questions qualitatives avec textarea
+  └─ Progression visuelle sophistiquée
+```
+
+#### Livrables Batch 1
+- SJT fonctionnel avec enrichissement qualitatif
+- Base de données structurée Sweet Spot
+- Extraction keywords basique (règles simples)
+- Tests utilisateur : parcours SJT complet 8-12 min
+
+---
+
+### **Batch 2 : Sweet Spot Engine + Détection Convergences (Semaine 2)**
+**Objectif** : Cœur algorithmique - détection des zones magiques Ikigaï
+
+#### Développements Prioritaires
+```
+□ Sweet Spot Engine Core
+  ├─ Algorithme détection convergences inter-dimensions
+  ├─ Calcul forces de convergence (mots-clés croisés)
+  ├─ Scoring Sweet Spot global
+  └─ API routes (/api/sweet-spot/detect)
+
+□ Canvas Ikigaï Avancé
+  ├─ 4 sliders avec contraintes (Viabilité ≥0.15, écart ≤0.40)
+  ├─ Affichage temps réel des convergences détectées
+  ├─ Visualisation intersection magique
+  └─ Moment "Eureka" si Sweet Spot Score >0.7
+
+□ Interface Sweet Spot Lab
+  ├─ Composant SweetSpotLabStep
+  ├─ Visualisation 4 cercles Ikigaï convergents
+  ├─ Animation "moment magique" convergences
+  └─ Cartes convergences avec force de liaison
+```
+
+#### Livrables Batch 2
+- Détection automatique convergences fonctionnelle
+- Interface Canvas révélant le Sweet Spot en temps réel
+- Score de convergence calculé et affiché
+- Tests : déclenchement "moment magique" pour 70%+ utilisateurs
+
+---
+
+### **Batch 3 : Génération Projets Hybrides IA (Semaine 3)**
+**Objectif** : Intelligence artificielle générant des métiers innovants personnalisés
+
+#### Développements Prioritaires
+```
+□ Intégration Claude API
+  ├─ Setup Claude API avec cache simple
+  ├─ Prompts zero-PII pour génération projets
+  ├─ Parsing et validation réponses IA
+  └─ Gestion erreurs et fallbacks
+
+□ Générateur Projets Hybrides
+  ├─ Service generateHybridProjects()
+  ├─ Templates prompts contextualisés
+  ├─ 5 métiers hybrides par utilisateur
+  ├─ Scoring automatique AI confidence
+  └─ API route (/api/sweet-spot/generate-projects)
+
+□ Interface Laboratoire Projets
+  ├─ Affichage projets générés avec cards
+  ├─ Détails projet (formations, secteur, horizon)
+  ├─ Sélection projets pour évaluation VIBRANT
+  └─ Loading states pendant génération IA
+```
+
+#### Livrables Batch 3
+- Génération automatique 5 métiers hybrides uniques
+- Interface exploration projets avec détails
+- Cache des prompts pour éviter régénération
+- Tests : projets pertinents et innovants générés
+
+---
+
+### **Batch 4 : Test VIBRANT + Validation Projets (Semaine 4)**
+**Objectif** : Évaluation sophistiquée des projets avec scoring 7 dimensions
+
+#### Développements Prioritaires
+```
+□ Test VIBRANT Complet
+  ├─ 7 dimensions VIBRANT (Vision, Impact, Bénéfice...)
+  ├─ Sliders notation 1-10 par dimension
+  ├─ Calcul score global et analyse forces/faiblesses
+  └─ Génération automatique Projet Signature si score >7.0
+
+□ Service Projet Signature
+  ├─ Génération formule personnelle
+  ├─ Création manifesto utilisateur
+  ├─ Stratégie 3 chemins (Académique/Entrepreneurial/Hybride)
+  └─ API route (/api/sweet-spot/evaluate-vibrant)
+
+□ Interface Validation
+  ├─ Modal VIBRANT test pour chaque projet
+  ├─ Affichage score temps réel pendant test
+  ├─ Page Projet Signature si validation réussie
+  └─ Comparaison projets évalués
+```
+
+#### Livrables Batch 4
+- Test VIBRANT fonctionnel pour validation projets
+- Génération automatique Projet Signature
+- Interface comparative projets évalués
+- Tests : validation cohérente avec profil utilisateur
+
+---
+
+## 🚀 **Phase 2 : Évolution Sweet Spot** (Batchs 5-6 si MVP réussi)
+
+### **Batch 5 : Sweet Spot Engine + IA Générative**
+**Objectif** : Activation des moteurs avancés sur les fondations solides
+
+#### Évolutions Naturelles
+```
+□ Enrichissement Moteurs Existants
+  ├─ qcm-engine.ts → ajout 2 questions qualitatives + extraction keywords
+  ├─ profile-builder.ts → calcul convergences + Sweet Spot Score
+  ├─ synthesis-engine.ts → remplacement bouchons par Claude API
+  └─ Aucune modification base de données (JSONB flexible)
+
+□ Sweet Spot Engine Activation
+  ├─ Détection convergences inter-dimensions
+  ├─ Génération projets hybrides IA
+  ├─ Animation "moment magique"
+  └─ Tout stocké dans JSONB existant
+
+□ Interface Évoluée
+  ├─ Canvas Ikigaï avec visualisation convergences
+  ├─ Laboratoire projets avec métiers innovants
+  └─ Animations et UX sophistiquées
+```
+
+### **Batch 6 : Test VIBRANT + Projet Signature**
+**Objectif** : Validation sophistiquée et génération manifesto personnel
+
+#### Ajouts Finaux
+```
+□ Test VIBRANT 7 Dimensions
+  ├─ Évaluation projets générés par IA
+  ├─ Scoring sophistiqué forces/faiblesses
+  └─ Stockage JSONB : { "projects": {...}, "vibrant": {...} }
+
+□ Projet Signature Automatique
+  ├─ Génération formule personnelle
+  ├─ Manifesto + stratégie 3 chemins
+  ├─ Export PDF "Sweet Spot Report" enrichi
+  └─ Tout basé sur données JSONB accumulées
+
+□ Access Control Freemium
+  ├─ Évolution access-control.ts pour modèle à crédits
+  ├─ Limitation Sweet Spot pour version gratuite
+  └─ Aucune modification architecture globale
+```
+
+---
+
+## 🎯 **Avantages de l'Approche MVP Évolutif**
+
+### **MVP Batch 1-4 : Immédiatement Viable**
+- ✅ **Fonctionnel complet** : SJT + Canvas + Formations + PFM + Export
+- ✅ **Valeur utilisateur démontrée** : Aide concrète orientation
+- ✅ **Monetisable** : 49,99€ justifiés par la personnalisation
+- ✅ **Rapide à développer** : 4 semaines vs 7 initialement
+
+### **Phase 2 Batch 5-6 : Évolution Sans Douleur**
+- ✅ **Aucun refactoring** : Architecture JSONB + moteurs isolés
+- ✅ **Enrichissement progressif** : Chaque moteur évolue indépendamment
+- ✅ **Aucune migration données** : JSONB absorbe toute complexité future
+- ✅ **Différenciation concurrentielle** : Sweet Spot devient la killer feature
+
+### **Gestion Risques Optimisée**
+- 🛡️ **MVP viable même si Phase 2 échoue** : Produit complet en 4 semaines
+- 🛡️ **Chaque batch livrable** : Validation continue utilisateurs
+- 🛡️ **Complexité IA isolée** : En Phase 2 seulement, pas critique MVP
+- 🛡️ **Pas de dette technique** : Architecture future-proof dès le début
+
+---
+
+## 📊 **Planning Révisé Ultra Réaliste**
+
+**MVP (Batch 1-4)** : 4 semaines → **PRODUIT COMPLET VENDABLE**
+**Phase 2 (Batch 5-6)** : 3 semaines → **DIFFÉRENCIATION SWEET SPOT**
+
+**Effort MVP** : ~30h/semaine (raisonnable)
+**Validation marché** : Après batch 4 (MVP complet)
+**Déclenchement Phase 2** : Si 50+ clients payants MVP
+
+## CRUCIAL : PAS DE DONNÉES BIDON / pas de solution de repli
+## RÈGLES CRUCIALES - À LIRE EN PREMIER
+
+CONTEXTE : Le développeur précédent a été licencié pour avoir ignoré le code existant et créé des doublons. Tu dois prouver que tu peux travailler dans l'architecture existante.
+ 
+1. **TOUJOURS lire instructions.doc.instructions.md** avant TOUT travail
+2. **TOUJOURS chercher dans les fichiers de la base de code** À CHAQUE FOIS avant de continuer
+3. **TOUJOURS suivre le workflow** : ANALYSER → RÉUTILISER → VALIDER → INTÉGRER
+4. **TOUJOURS suivre** : Recherche → Planification → Mise en œuvre (JAMAIS passer directement au code)
+5. **TOUJOURS modifier** le code avec une précision chirurgicale
