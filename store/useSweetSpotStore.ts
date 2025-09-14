@@ -42,6 +42,39 @@ function saveFilters(activeDims: DimKey[], filterMode: FilterMode) {
   } catch {}
 }
 
+// Preferences (sliders + boost) persistence
+const LS_PREFS = 'ikigaiPrefs.v1';
+function defaultSliders(): SliderValues {
+  return { passions: 0.25, talents: 0.25, utilite: 0.25, viabilite: 0.25 };
+}
+function loadPrefs(): { sliders: SliderValues; boostEnabled: boolean } {
+  if (typeof window === 'undefined') {
+    return { sliders: defaultSliders(), boostEnabled: true };
+  }
+  try {
+    const raw = localStorage.getItem(LS_PREFS);
+    if (!raw) return { sliders: defaultSliders(), boostEnabled: true };
+    const parsed = JSON.parse(raw);
+    const s = parsed?.sliders ?? {};
+    const sliders: SliderValues = {
+      passions: typeof s.passions === 'number' ? s.passions : 0.25,
+      talents: typeof s.talents === 'number' ? s.talents : 0.25,
+      utilite: typeof s.utilite === 'number' ? s.utilite : 0.25,
+      viabilite: typeof s.viabilite === 'number' ? Math.max(0.15, s.viabilite) : 0.25,
+    };
+    const boost = typeof parsed?.boostEnabled === 'boolean' ? parsed.boostEnabled : true;
+    return { sliders, boostEnabled: boost };
+  } catch {
+    return { sliders: defaultSliders(), boostEnabled: true };
+  }
+}
+function savePrefs(sliders: SliderValues, boostEnabled: boolean) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_PREFS, JSON.stringify({ sliders, boostEnabled }));
+  } catch {}
+}
+
 // ...imports & types existants
 export type SweetSpotStore = {
   userKeywords: Record<Dimension, string[]>;
@@ -83,17 +116,12 @@ export type SweetSpotStore = {
 };
 
 export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
-  // Load persisted filters (no-op on server)
-  ...((): Partial<SweetSpotStore> => {
-    const initial = loadFilters();
-    return {
-      activeDims: initial.activeDims,
-      filterMode: initial.filterMode,
-    } as Partial<SweetSpotStore>;
-  })(),
+  // Load persisted filters (no-op on server) but ensure defaults present
+  activeDims: loadFilters().activeDims,
+  filterMode: loadFilters().filterMode,
 
   userKeywords: { passions: [], talents: [], utilite: [], viabilite: [] },
-  sliderValues: { passions: 0.25, talents: 0.25, utilite: 0.25, viabilite: 0.25 },
+  sliderValues: loadPrefs().sliders,
   convergences: [],
   sweetSpotScore: 0,
   isLoading: false,
@@ -107,11 +135,13 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
     set({ selectedTags: Array.from(new Set(tags.map((t) => t.toLowerCase()))) }),
 
   // ✅ état + action
-  boostEnabled: true,
-  setBoostEnabled: (v) => set({ boostEnabled: v }),
+  boostEnabled: loadPrefs().boostEnabled,
+  setBoostEnabled: (v) => {
+    set({ boostEnabled: v });
+    savePrefs(get().sliderValues, v);
+  },
 
   // filtres de dimensions
-  activeDims: [],
   toggleDim: (k) =>
     set((s) => {
       const on = new Set<DimKey>(s.activeDims);
@@ -126,7 +156,6 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
       return { activeDims: [] };
     }),
 
-  filterMode: 'union',
   setFilterMode: (m) =>
     set((s) => {
       saveFilters(s.activeDims, m);
@@ -214,6 +243,8 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
       autoAdjustSeq: autoKey ? s.autoAdjustSeq + 1 : s.autoAdjustSeq,
       autoAdjust: evt,
     }));
+    // persist sliders + boost
+    savePrefs(next, get().boostEnabled);
     get().fetchConvergences();
   },
 
