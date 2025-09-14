@@ -44,17 +44,19 @@ export default function ConvergenceCloud({
 }) {
   const convergences = useSweetSpotStore((s) => s.convergences as StoreConvergence[]);
   const active = useSweetSpotStore((s) => s.activeDims as DimKey[]);
+  const mode = useSweetSpotStore((s) => s.filterMode);
 
   const items = useMemo(() => {
     const list = Array.isArray(convergences) ? convergences : [];
-    const filtered = active.length
-      ? list.filter((c) =>
-          c.matchedDimensions.some((d) => {
-            const k = normDim(String(d));
-            return k ? active.includes(k) : false;
-          }),
-        )
-      : list;
+    const filtered = active.length === 0
+      ? list
+      : list.filter((c) => {
+          const dims = c.matchedDimensions.map((d) => normDim(String(d))).filter(Boolean) as DimKey[];
+          if (mode === 'union') {
+            return active.some((a) => dims.includes(a));
+          }
+          return active.every((a) => dims.includes(a));
+        });
 
     const top = [...filtered]
       .filter((c) => c && typeof c.strength === 'number')
@@ -79,7 +81,7 @@ export default function ConvergenceCloud({
         dims: DimKey[];
       };
     });
-  }, [convergences, active, max, baseRadius, minRadius]);
+  }, [convergences, active, mode, max, baseRadius, minRadius]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">

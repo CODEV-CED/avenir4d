@@ -7,6 +7,7 @@ export type { SliderKey, SliderValues };
 // types utiles
 export type Dimension = 'passions' | 'talents' | 'utilite' | 'viabilite';
 export type DimKey = Dimension;
+export type FilterMode = 'union' | 'intersection';
 export type Convergence = {
   keyword: string;
   strength: number;
@@ -46,6 +47,10 @@ export type SweetSpotStore = {
   toggleDim: (k: DimKey) => void;
   clearDims: () => void;
 
+  /** Mode de filtre pour les convergences */
+  filterMode: FilterMode;
+  setFilterMode: (m: FilterMode) => void;
+
   setSliderValue: (dimension: SliderKey, rawValue: number) => void;
   setUserKeywords: (kw: Record<Dimension, string[]>) => void;
   fetchConvergences: () => Promise<void>;
@@ -79,6 +84,9 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
       return { activeDims: Array.from(on) };
     }),
   clearDims: () => set({ activeDims: [] }),
+
+  filterMode: 'union',
+  setFilterMode: (m) => set({ filterMode: m }),
 
   setSliderValue: (dimension, rawValue) => {
     const state = get();
