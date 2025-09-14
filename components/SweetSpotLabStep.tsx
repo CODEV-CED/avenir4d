@@ -115,7 +115,10 @@ export default function SweetSpotLabStep() {
       {/* Légende + Canvas */}
       <TooltipProvider delayDuration={150}>
         <IkigaiLegend className="mb-1" />
-        <p className="mb-3 text-xs text-gray-500">
+        <p className="mb-3 text-[11px] text-gray-500 sm:hidden">
+          Filtrer par dimension. Réinitialiser = tout.
+        </p>
+        <p className="mb-3 hidden text-xs text-gray-500 sm:block">
           Cliquez pour filtrer. Réinitialiser pour tout afficher.
         </p>
         <IkigaiCanvas />
