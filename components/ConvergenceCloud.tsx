@@ -48,15 +48,18 @@ export default function ConvergenceCloud({
 
   const items = useMemo(() => {
     const list = Array.isArray(convergences) ? convergences : [];
-    const filtered = active.length === 0
-      ? list
-      : list.filter((c) => {
-          const dims = c.matchedDimensions.map((d) => normDim(String(d))).filter(Boolean) as DimKey[];
-          if (mode === 'union') {
-            return active.some((a) => dims.includes(a));
-          }
-          return active.every((a) => dims.includes(a));
-        });
+    const filtered =
+      active.length === 0
+        ? list
+        : list.filter((c) => {
+            const dims = c.matchedDimensions
+              .map((d) => normDim(String(d)))
+              .filter(Boolean) as DimKey[];
+            if (mode === 'union') {
+              return active.some((a) => dims.includes(a));
+            }
+            return active.every((a) => dims.includes(a));
+          });
 
     const top = [...filtered]
       .filter((c) => c && typeof c.strength === 'number')

@@ -16,6 +16,32 @@ export type Convergence = {
   boostedBy?: string[];
 };
 
+// Persistence helpers for dimension filters
+const LS_KEY = 'ikigaiFilters.v1';
+function loadFilters(): { activeDims: DimKey[]; filterMode: FilterMode } {
+  if (typeof window === 'undefined') return { activeDims: [], filterMode: 'union' };
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return { activeDims: [], filterMode: 'union' };
+    const parsed = JSON.parse(raw);
+    const dims = Array.isArray(parsed.activeDims)
+      ? (parsed.activeDims.filter((d: string) =>
+          ['passions', 'talents', 'utilite', 'viabilite'].includes(d),
+        ) as DimKey[])
+      : [];
+    const mode: FilterMode = parsed.filterMode === 'intersection' ? 'intersection' : 'union';
+    return { activeDims: Array.from(new Set(dims)), filterMode: mode };
+  } catch {
+    return { activeDims: [], filterMode: 'union' };
+  }
+}
+function saveFilters(activeDims: DimKey[], filterMode: FilterMode) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ activeDims, filterMode }));
+  } catch {}
+}
+
 // ...imports & types existants
 export type SweetSpotStore = {
   userKeywords: Record<Dimension, string[]>;
@@ -57,6 +83,15 @@ export type SweetSpotStore = {
 };
 
 export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
+  // Load persisted filters (no-op on server)
+  ...((): Partial<SweetSpotStore> => {
+    const initial = loadFilters();
+    return {
+      activeDims: initial.activeDims,
+      filterMode: initial.filterMode,
+    } as Partial<SweetSpotStore>;
+  })(),
+
   userKeywords: { passions: [], talents: [], utilite: [], viabilite: [] },
   sliderValues: { passions: 0.25, talents: 0.25, utilite: 0.25, viabilite: 0.25 },
   convergences: [],
@@ -81,12 +116,22 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
     set((s) => {
       const on = new Set<DimKey>(s.activeDims);
       on.has(k) ? on.delete(k) : on.add(k);
-      return { activeDims: Array.from(on) };
+      const next = Array.from(on);
+      saveFilters(next, s.filterMode);
+      return { activeDims: next };
     }),
-  clearDims: () => set({ activeDims: [] }),
+  clearDims: () =>
+    set((s) => {
+      saveFilters([], s.filterMode);
+      return { activeDims: [] };
+    }),
 
   filterMode: 'union',
-  setFilterMode: (m) => set({ filterMode: m }),
+  setFilterMode: (m) =>
+    set((s) => {
+      saveFilters(s.activeDims, m);
+      return { filterMode: m };
+    }),
 
   setSliderValue: (dimension, rawValue) => {
     const state = get();

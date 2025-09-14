@@ -59,7 +59,9 @@ export default function IkigaiLegend({ className }: Props) {
           onClick={() => setMode('union')}
           className={clsx(
             'px-3 py-1 text-xs transition',
-            mode === 'union' ? 'bg-white/90 text-gray-900' : 'bg-white/10 text-white/80 hover:bg-white/15',
+            mode === 'union'
+              ? 'bg-white/90 text-gray-900'
+              : 'bg-white/10 text-white/80 hover:bg-white/15',
           )}
           title="Au moins une dimension sélectionnée"
         >
