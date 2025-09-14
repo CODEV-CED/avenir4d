@@ -1,6 +1,7 @@
 // components/formations/WhyThis.tsx
 'use client';
 import { useState, MouseEvent } from 'react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/UI/tooltip';
 
 type Breakdown = {
   plaisir?: number;
@@ -28,18 +29,22 @@ export default function WhyThis({ explanation }: { explanation?: Explanation }) 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen(true);
-        }}
-        className="inline-flex shrink-0 items-center gap-1 text-xs leading-none whitespace-nowrap text-indigo-700 hover:underline"
-        title="Voir les raisons de cette recommandation"
-      >
-        Pourquoi je vois ça ?
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="inline-flex shrink-0 items-center gap-1 text-xs leading-none whitespace-nowrap text-indigo-700 hover:underline"
+          >
+            Pourquoi je vois ça ?
+          </button>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6}>Voir les raisons de cette recommandation</TooltipContent>
+      </Tooltip>
 
       {open && (
         <div

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import type { FormationStatic, Ranking } from '@/types/formation';
 import FeedbackButtons from '@/components/formations/FeedbackButtons';
 import ExplainPopover from './ExplainPopover';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/UI/tooltip';
 // Import “namespace” — fonctionne même si ton module exporte {telemetry} ou des fonctions séparées
 import * as Telemetry from '@/lib/telemetry';
 import Link from 'next/link';
@@ -64,15 +65,21 @@ export default function FormationCard({
         <div className="flex items-center gap-2">
           {/* Badge Classement si dispo */}
           {top && top.source && (
-            <a
-              href={formation.website || '#'}
-              target={formation.website ? '_blank' : undefined}
-              rel={formation.website ? 'noopener noreferrer' : undefined}
-              title={`${top.source ?? ''} ${top.year ?? ''}`}
-              className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
-            >
-              #{top.position ?? ''} {top.source ?? ''}
-            </a>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={formation.website || '#'}
+                  target={formation.website ? '_blank' : undefined}
+                  rel={formation.website ? 'noopener noreferrer' : undefined}
+                  className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
+                >
+                  #{top.position ?? ''} {top.source ?? ''}
+                </a>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={6}>
+                {`${top.source ?? ''}${top.year ? ` • ${top.year}` : ''}`}
+              </TooltipContent>
+            </Tooltip>
           )}
 
           <ExplainPopover explanation={formation.explanation} />
@@ -104,18 +111,22 @@ export default function FormationCard({
             ✅ Déjà dans mes vœux
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={wishlistFull}
-            className="focus-ring w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-            title={
-              wishlistFull ? 'Limite de 6 vœux atteinte' : 'Ajouter cette formation à mes vœux'
-            }
-            aria-disabled={wishlistFull}
-          >
-            {wishlistFull ? 'Limite atteinte (6/6)' : 'Ajouter aux vœux'}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={wishlistFull}
+                className="focus-ring w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-disabled={wishlistFull}
+              >
+                {wishlistFull ? 'Limite atteinte (6/6)' : 'Ajouter aux vœux'}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={6}>
+              {wishlistFull ? 'Limite de 6 vœux atteinte' : 'Ajouter cette formation à mes vœux'}
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
