@@ -4,10 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSweetSpotStore } from '@/store/useSweetSpotStore';
 
 export default function AutoAdjustBanner() {
-  const { autoAdjust, clearAutoAdjust } = useSweetSpotStore((s) => ({
-    autoAdjust: s.autoAdjust,
-    clearAutoAdjust: s.clearAutoAdjust,
-  }));
+  const autoAdjust = useSweetSpotStore((s) => s.autoAdjust);
+  const clearAutoAdjust = useSweetSpotStore((s) => s.clearAutoAdjust);
 
   useEffect(() => {
     if (!autoAdjust) return;

@@ -25,14 +25,15 @@ export default function LabPage() {
   // Lance le fetch après hydratation uniquement (et avec fallback localStorage)
   useEffect(() => {
     if (!isClient) return;
-    const pid = qId || (typeof window !== 'undefined' ? localStorage.getItem('sjtProfileId') || '' : '');
+    const pid =
+      qId || (typeof window !== 'undefined' ? localStorage.getItem('sjtProfileId') || '' : '');
     if (pid) fetchProfile(pid);
   }, [isClient, qId, fetchProfile]);
 
   // ✅ Rendu : même skeleton SSR/CSR → pas de mismatch d’hydratation
   if (!isClient) return <SweetSpotLabSkeleton />;
-  if (loading)   return <SweetSpotLabSkeleton />;
-  if (error)     return <div className="p-6 text-red-500">{error}</div>;
+  if (loading) return <SweetSpotLabSkeleton />;
+  if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return <SweetSpotLabStep />;
 }
