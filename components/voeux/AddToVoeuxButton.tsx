@@ -5,7 +5,7 @@ import { useVoeux } from '@/lib/voeux';
 export default function AddToVoeuxButton({ id }: { id: string }) {
   const { isSelected, toggle, isFull } = useVoeux();
   const selected = isSelected(id);
-  const full = isFull();
+  const full = isFull;
 
   return (
     <button

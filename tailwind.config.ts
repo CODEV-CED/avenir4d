@@ -12,7 +12,7 @@ const config: Config = {
       boxShadow: { soft: '0 6px 20px rgba(0,0,0,0.08)' },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 };
 
 export default config;

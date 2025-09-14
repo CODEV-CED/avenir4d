@@ -1,3 +1,5 @@
+# Variables d'environnement locales
+.env.local
 # Next / Node
 .next
 node_modules

@@ -15,6 +15,17 @@ const compat = new FlatCompat({
 });
 
 export default [
+  // Ignore build artifacts and deps
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+      '**/.vercel/**',
+    ],
+  },
   js.configs.recommended,
   ...compat.config({
     extends: ['plugin:@next/next/core-web-vitals'],

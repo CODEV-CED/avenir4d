@@ -1,79 +1,92 @@
-// lib/voeux.ts
-const KEY = 'a4d:voeux:v1';
-export const MAX_VOEUX = 6;
+'use client';
 
-const isBrowser = () => typeof window !== 'undefined';
-const emit = () => isBrowser() && window.dispatchEvent(new CustomEvent('voeux-changed'));
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
-export function loadVoeux(): string[] {
-  if (!isBrowser()) return [];
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || '[]');
-  } catch {
-    return [];
+// Clé “officielle” unique
+const KEY = 'a4d:voeux';
+// Clés possibles “anciennes”
+const LEGACY_KEYS = ['wishlist', 'a4d:wishlist'];
+
+function readIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  // lecture clé officielle
+  const raw = localStorage.getItem(KEY);
+  if (raw) {
+    try {
+      return JSON.parse(raw) ?? [];
+    } catch {
+      return [];
+    }
   }
-}
-export function saveVoeux(ids: string[]) {
-  if (!isBrowser()) return;
-  localStorage.setItem(KEY, JSON.stringify(ids.slice(0, MAX_VOEUX)));
-  emit();
-}
-
-export function isSelected(id: string) {
-  return loadVoeux().includes(id);
-}
-export function isFull() {
-  return loadVoeux().length >= MAX_VOEUX;
-}
-
-export function addVoeu(id: string) {
-  const ids = loadVoeux();
-  if (ids.includes(id)) return { ok: true };
-  if (ids.length >= MAX_VOEUX) return { ok: false, reason: 'limit' };
-  ids.push(id);
-  saveVoeux(ids);
-  return { ok: true };
+  // fallback: migrer depuis anciennes clés si présentes
+  for (const old of LEGACY_KEYS) {
+    const legacy = localStorage.getItem(old);
+    if (legacy) {
+      try {
+        const parsed = JSON.parse(legacy) ?? [];
+        localStorage.setItem(KEY, JSON.stringify(parsed));
+        // on peut conserver l’ancienne clé ou la supprimer :
+        // localStorage.removeItem(old)
+        return parsed;
+      } catch {}
+    }
+  }
+  return [];
 }
 
-export function removeVoeu(id: string) {
-  const ids = loadVoeux().filter((x) => x !== id);
-  saveVoeux(ids);
+function writeIds(ids: string[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(KEY, JSON.stringify(ids));
 }
 
-export function toggleVoeu(id: string) {
-  const ids = loadVoeux();
-  if (ids.includes(id)) saveVoeux(ids.filter((x) => x !== id));
-  else addVoeu(id);
-}
-
-export function moveVoeu(fromIndex: number, toIndex: number) {
-  const ids = loadVoeux();
-  if (fromIndex < 0 || fromIndex >= ids.length) return;
-  if (toIndex < 0 || toIndex >= ids.length) return;
-  const [item] = ids.splice(fromIndex, 1);
-  ids.splice(toIndex, 0, item);
-  saveVoeux(ids);
-}
-
-// Hook pratique
-import { useEffect, useState } from 'react';
 export function useVoeux() {
+  const [hydrated, setHydrated] = useState(false);
   const [ids, setIds] = useState<string[]>([]);
+
   useEffect(() => {
-    setIds(loadVoeux());
-    const h = () => setIds(loadVoeux());
-    window.addEventListener('voeux-changed', h);
-    return () => window.removeEventListener('voeux-changed', h);
+    setHydrated(true);
+    setIds(readIds());
   }, []);
-  return {
-    ids,
-    count: ids.length,
-    max: MAX_VOEUX,
-    add: addVoeu,
-    remove: removeVoeu,
-    toggle: toggleVoeu,
-    move: moveVoeu,
-    isSelected: (id: string) => ids.includes(id),
-    isFull: () => ids.length >= MAX_VOEUX,
-  };
+
+  const add = useCallback((id: string) => {
+    setIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      writeIds(next);
+      return next;
+    });
+  }, []);
+
+  const remove = useCallback((id: string) => {
+    setIds((prev) => {
+      const next = prev.filter((x) => x !== id);
+      writeIds(next);
+      return next;
+    });
+  }, []);
+
+  const toggle = useCallback((id: string) => {
+    setIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      writeIds(next);
+      return next;
+    });
+  }, []);
+
+  const move = useCallback((from: number, to: number) => {
+    setIds((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      writeIds(next);
+      return next;
+    });
+  }, []);
+
+  const count = ids.length;
+  const max = 6;
+  const isSelected = useCallback((id: string) => ids.includes(id), [ids]);
+  const isFull = useMemo(() => count >= max, [count]);
+
+  return { hydrated, ids, count, max, add, remove, toggle, move, isSelected, isFull };
 }

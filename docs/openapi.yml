@@ -1,0 +1,377 @@
+Voici une spécification OpenAPI 3.1 dérivée de ton zSJTSubmit (POST /api/sjt/submit) + une route GET de stats. Copie-colle telle quelle dans un fichier openapi.yml.
+
+openapi: 3.1.0
+info:
+  title: SweetSpot SJT API
+  version: "1.0.0"
+  description: |
+    Endpoints de soumission et de statistiques pour le questionnaire SJT (SweetSpot).
+    Schémas alignés avec `zSJTSubmit` (validation Zod).
+
+servers:
+  - url: https://example.com
+    description: Serveur de prod
+  - url: http://localhost:3000
+    description: Dev local
+
+tags:
+  - name: SJT
+    description: Soumission du questionnaire
+  - name: Stats
+    description: Statistiques agrégées
+
+paths:
+  /api/sjt/submit:
+    post:
+      tags: [SJT]
+      summary: Soumettre les réponses SJT et créer un profil
+      operationId: submitSJT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SJTSubmit"
+            examples:
+              valid:
+                summary: Exemple valide
+                value:
+                  choices:
+                    - questionId: sjt_01
+                      optionId: opt_01_b
+                      confidence: 5
+                    - questionId: sjt_02
+                      optionId: opt_02_d
+                  qual:
+                    dimancheMatin: "Je code des petits projets perso et j'explore des libs JS."
+                    algoPersonnel: "Vidéos de vulgarisation tech, talks performance, design systems."
+                    talentReconnu: "Expliquer simplement, structurer, déboguer rapidement."
+                    indignationMax: "Inégalités d'accès à l'éducation numérique."
+                  profile4d:
+                    plaisir: 0.74
+                    competence: 0.82
+                    utilite: 0.68
+                    viabilite: 0.71
+                    confidence_avg: 4.2
+                    version: 1
+                    source: sjt_v2
+                  keywords:
+                    plaisir: ["side projects","musique","créativité"]
+                    competence: ["architecture","debug","performance"]
+                    utilite: ["éducation","open source"]
+                    viabilite: ["freelance","sas"]
+                  surveyVersion: sjt_v2
+                  idempotencyKey: "c1b8b1a0-0f1e-4b6b-9d71-abc123xyz789"
+      responses:
+        "201":
+          description: Profil créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateProfileResponse"
+              examples:
+                created:
+                  value:
+                    ok: true
+                    id: "9d2fbe55-0d9a-4ff1-8f8d-8a9e9e3b4a21"
+                    message: "Profil sauvegardé avec succès"
+                    profile:
+                      version: 1
+                      createdAt: "2025-09-05T12:34:56.000Z"
+        "400":
+          description: Données invalides (validation Zod)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZodErrorResponse"
+              examples:
+                invalid:
+                  value:
+                    ok: false
+                    error: "Veuillez corriger les champs indiqués"
+                    details:
+                      - field: "qual.dimancheMatin"
+                        label: "Test du Dimanche Matin"
+                        code: "too_small"
+                        message: "Au moins 10 caractères requis."
+                        path: ["qual","dimancheMatin"]
+        "409":
+          description: Conflit (doublon via idempotencyKey)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                conflict:
+                  value:
+                    ok: false
+                    error: "Profil déjà existant"
+        "415":
+          description: Type de contenu non supporté
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur interne serveur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWithTimestamp"
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+  /api/sjt/submit/stats:
+    get:
+      tags: [Stats]
+      summary: Obtenir des statistiques récentes
+      operationId: getStats
+      responses:
+        "200":
+          description: Statistiques disponibles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+              examples:
+                ok:
+                  value:
+                    ok: true
+                    stats:
+                      total_profiles: 1242
+                      recent_submissions:
+                        - id: "9d2fbe55-0d9a-4ff1-8f8d-8a9e9e3b4a21"
+                          created_at: "2025-09-05T12:34:56.000Z"
+                          source: "sjt_v2"
+                          version: 1
+                        - id: "4a1c7e5e-1e02-4c32-86c8-1c6f96e5d0ad"
+                          created_at: "2025-09-05T12:18:11.000Z"
+                          source: "sjt_v2"
+                          version: 1
+        "500":
+          description: Erreur interne serveur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT (ex. Supabase) via Authorization header.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sb-access-token
+      description: Session via cookie (auth-helpers). Le nom exact peut varier.
+
+  schemas:
+    # ----- Core payload -----
+    SJTSubmit:
+      type: object
+      additionalProperties: false
+      required: [choices, qual, profile4d]
+      properties:
+        choices:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: >
+            Liste des choix QCM. Un `questionId` ne doit apparaître **qu'une seule fois** (contrainte métier).
+          items:
+            $ref: "#/components/schemas/Choice"
+        qual:
+          $ref: "#/components/schemas/QualInputs"
+        profile4d:
+          $ref: "#/components/schemas/Profile4DInput"
+        keywords:
+          $ref: "#/components/schemas/Keywords"
+        surveyVersion:
+          type: string
+          enum: [sjt_v2]
+        idempotencyKey:
+          type: string
+          minLength: 8
+          maxLength: 72
+          description: Clé d'idempotence optionnelle (index UNIQUE conseillé côté DB).
+
+    Choice:
+      type: object
+      additionalProperties: false
+      required: [questionId, optionId]
+      properties:
+        questionId:
+          type: string
+          minLength: 1
+          maxLength: 50
+        optionId:
+          type: string
+          minLength: 1
+          maxLength: 50
+        confidence:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Confiance de l'utilisateur pour ce choix (1–5).
+
+    QualInputs:
+      type: object
+      additionalProperties: false
+      required: [dimancheMatin, algoPersonnel, talentReconnu, indignationMax]
+      properties:
+        dimancheMatin:
+          $ref: "#/components/schemas/NormalizedText"
+        algoPersonnel:
+          $ref: "#/components/schemas/NormalizedText"
+        talentReconnu:
+          $ref: "#/components/schemas/NormalizedText"
+        indignationMax:
+          $ref: "#/components/schemas/NormalizedText"
+
+    NormalizedText:
+      type: string
+      minLength: 10
+      maxLength: 2000
+      description: |
+        Texte normalisé côté serveur (NFKC, trim, collapse espaces). 
+        Longueur validée **après** normalisation.
+
+    Profile4DInput:
+      type: object
+      additionalProperties: false
+      required: [plaisir, competence, utilite, viabilite, confidence_avg]
+      properties:
+        plaisir:
+          $ref: "#/components/schemas/ZeroOne"
+        competence:
+          $ref: "#/components/schemas/ZeroOne"
+        utilite:
+          $ref: "#/components/schemas/ZeroOne"
+        viabilite:
+          $ref: "#/components/schemas/ZeroOne"
+        confidence_avg:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Moyenne de confiance (échelle 1–5).
+        version:
+          type: integer
+          enum: [1]
+        source:
+          type: string
+          enum: [sjt_v2, import, manual]
+
+    ZeroOne:
+      type: number
+      minimum: 0
+      maximum: 1
+
+    Keywords:
+      type: object
+      additionalProperties: false
+      description: Mots-clés normalisés (lowercase, uniques) par dimension.
+      properties:
+        plaisir:
+          $ref: "#/components/schemas/KeywordArray"
+        competence:
+          $ref: "#/components/schemas/KeywordArray"
+        utilite:
+          $ref: "#/components/schemas/KeywordArray"
+        viabilite:
+          $ref: "#/components/schemas/KeywordArray"
+
+    KeywordArray:
+      type: array
+      maxItems: 20
+      uniqueItems: true
+      items:
+        type: string
+        minLength: 1
+        maxLength: 100
+
+    # ----- Responses -----
+    CreateProfileResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          const: true
+        id:
+          type: string
+          description: Identifiant en base (UUID).
+        message:
+          type: string
+        profile:
+          type: object
+          properties:
+            version:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          type: string
+
+    ErrorWithTimestamp:
+      allOf:
+        - $ref: "#/components/schemas/ErrorResponse"
+        - type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+
+    ZodIssueDTO:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Chemin du champ (ex. "qual.dimancheMatin" ou "choices[2].optionId").
+        label:
+          type: string
+          description: Libellé convivial si fourni par le serveur.
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+
+    ZodErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          const: false
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ZodIssueDTO"
+
+Notes d’implémentation
+
+201 vs 200 : renvoie 201 Created avec header Location (/api/user_profiles/{id}) si possible.
+
+Idempotence : si tu actives idempotencyKey, crée un index UNIQUE côté DB et renvoie 409 en cas de doublon.
+
+Sécurité : adapte cookieAuth (nom du cookie) à ta stack Supabase si besoin.
+
+Unicité des questionId : contrainte exprimée en description (non exprimable nativement en JSON Schema draft/3.1 pour un array d’objets).
+
+Tu veux aussi la version JSON (OpenAPI JSON) ou un Swagger UI Bundle prêt à servir ?

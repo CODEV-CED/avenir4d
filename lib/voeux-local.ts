@@ -1,40 +1,53 @@
-// lib/voeux-local.ts
-const KEY = 'a4d:voeux:v1';
-const MAX_VOEUX = 6;
+import type { Profile4D } from '@/types/sjt';
+import { loadProfile, profileKey } from '@/lib/storage';
 
-const isBrowser = () => typeof window !== 'undefined';
+const BASE = 'a4d:voeux';
 
-export function loadVoeux(): string[] {
-  if (!isBrowser()) return [];
+function keyForProfile(profile: Profile4D): string {
+  return `${BASE}:${profileKey(profile)}`;
+}
+
+export function loadVoeux(profile: Profile4D): string[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(keyForProfile(profile));
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch {
     return [];
   }
 }
 
-function saveVoeux(next: string[]) {
-  if (!isBrowser()) return;
+export function saveVoeux(profile: Profile4D, list: string[]) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(next));
+    localStorage.setItem(keyForProfile(profile), JSON.stringify(list));
   } catch {}
 }
 
-export function isFull(list: string[]) {
-  return list.length >= MAX_VOEUX;
-}
-
-// ⬇️ Ces deux fonctions retournent le NOUVEAU tableau ET le persistent
-export function addVoeu(prev: string[], id: string): string[] {
-  if (prev.includes(id) || prev.length >= MAX_VOEUX) return prev;
+export function addVoeu(profile: Profile4D, prev: string[], id: string, max = 6): string[] {
+  if (prev.includes(id)) return prev;
+  if (prev.length >= max) return prev;
   const next = [...prev, id];
-  saveVoeux(next);
+  saveVoeux(profile, next);
   return next;
 }
 
-export function removeVoeu(prev: string[], id: string): string[] {
-  const next = prev.filter((v) => v !== id);
-  saveVoeux(next);
+export function removeVoeu(profile: Profile4D, prev: string[], id: string): string[] {
+  const next = prev.filter((x) => x !== id);
+  saveVoeux(profile, next);
   return next;
 }
+
+export function isFull(list: string[], max = 6) {
+  return list.length >= max;
+}
+
+export function clearVoeux(profile: Profile4D) {
+  try {
+    localStorage.removeItem(keyForProfile(profile));
+  } catch {}
+  return [] as string[];
+}
+
+const currentProfileKey = profileKey(loadProfile());
+
+// Dans le JSX, près du titre :
+// {/* <div className="text-xs text-gray-400">profil: {currentProfileKey}</div> */}

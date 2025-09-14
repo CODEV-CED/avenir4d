@@ -1,4 +1,18 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "tailwindCSS.experimental.classRegex": [
+    ["classNames\\(([^)]*)\\)", "(['\"])([^'\"]*)\\1"],
+    ["cva\\(([^)]*)\\)", "(['\"])([^'\"]*)\\1"],
+    ["clsx\\(([^)]*)\\)", "(['\"])([^'\"]*)\\1"]
+  ],
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html",
+    "mdx": "markdown"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.showPixelEquivalents": true,
+  "tailwindCSS.tailwindConfig": "tailwind.config.ts",
+  "css.lint.unknownAtRules": "ignore",
+  "postcss.validate": true
 }

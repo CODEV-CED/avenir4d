@@ -1,0 +1,18 @@
+### INVALID -> 422
+POST http://localhost:3001/api/sjt/submit
+Content-Type: application/json
+
+{ "choices": [] }
+
+### VALID -> 201
+POST http://localhost:3001/api/sjt/submit
+Content-Type: application/json
+
+{
+  "choices": [ { "questionId": "q1", "optionId": "opt2" } ],
+  "profile4d": { "plaisir": 0.6, "competence": 0.5, "utilite": 0.7, "viabilite": 0.8, "confidence_avg": 0.7, "version": 2 },
+  "qual": { "dimancheMatin": "...", "algoPersonnel": "...", "talentReconnu": "...", "indignationMax": "..." },
+  "keywords": { "passions": ["design"], "talents": ["design"], "utilite": [], "viabilite": [] },
+  "surveyVersion": "sjt_v2",
+  "idempotencyKey": "demo-rest-123"
+}
