@@ -15,6 +15,24 @@ function hash01(s: string) {
   return (h >>> 0) / 2 ** 32;
 }
 
+// Dimensions helpers for visual dots + filters
+const DIM_KEYS = ['passions', 'talents', 'utilite', 'viabilite'] as const;
+type DimKey = (typeof DIM_KEYS)[number];
+const DOT: Record<DimKey, string> = {
+  passions: 'bg-pink-500',
+  talents: 'bg-blue-500',
+  utilite: 'bg-emerald-500',
+  viabilite: 'bg-yellow-400',
+};
+function normDim(d: string): DimKey | null {
+  const s = d.toLowerCase();
+  if (s.startsWith('pass')) return 'passions';
+  if (s.startsWith('talent')) return 'talents';
+  if (s.startsWith('util')) return 'utilite';
+  if (s.startsWith('viab')) return 'viabilite';
+  return null;
+}
+
 export default function ConvergenceCloud({
   max = 8,
   baseRadius = 110,
@@ -25,14 +43,18 @@ export default function ConvergenceCloud({
   minRadius?: number;
 }) {
   const convergences = useSweetSpotStore((s) => s.convergences as StoreConvergence[]);
+  const active = useSweetSpotStore((s) => s.activeDims as DimKey[]);
 
   const items = useMemo(() => {
-    if (!Array.isArray(convergences))
-      return [] as Array<
-        StoreConvergence & { x: number; y: number; scale: number; opacity: number }
-      >;
+    const list = Array.isArray(convergences) ? convergences : [];
+    const filtered = active.length
+      ? list.filter((c) => c.matchedDimensions.some((d) => {
+          const k = normDim(String(d));
+          return k ? active.includes(k) : false;
+        }))
+      : list;
 
-    const top = [...convergences]
+    const top = [...filtered]
       .filter((c) => c && typeof c.strength === 'number')
       .sort((a, b) => b.strength - a.strength)
       .slice(0, max);
@@ -44,9 +66,12 @@ export default function ConvergenceCloud({
       const y = Math.sin(a) * r;
       const scale = 0.9 + c.strength * 0.5; // 0.9 → 1.4
       const opacity = 0.6 + c.strength * 0.4; // 0.6 → 1.0
-      return { ...c, x, y, scale, opacity };
+      const dims = DIM_KEYS.filter((k) => c.matchedDimensions.some((d) => normDim(String(d)) === k));
+      return { ...c, x, y, scale, opacity, dims } as StoreConvergence & {
+        x: number; y: number; scale: number; opacity: number; dims: DimKey[];
+      };
     });
-  }, [convergences, max, baseRadius, minRadius]);
+  }, [convergences, active, max, baseRadius, minRadius]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
@@ -64,23 +89,30 @@ export default function ConvergenceCloud({
               <TooltipTrigger asChild>
                 <span
                   className={[
-                    'rounded-full px-2.5 py-1 text-xs font-medium shadow select-none',
+                    'select-none rounded-full px-2.5 py-1 text-xs font-medium shadow ring-1',
                     c.boosted
-                      ? 'bg-emerald-600/90 text-white ring-1 ring-white/15'
-                      : 'bg-white/85 text-gray-900 ring-1 ring-black/10',
+                      ? 'bg-emerald-600/90 text-white ring-white/15'
+                      : 'bg-white/85 text-gray-900 ring-black/10',
                   ].join(' ')}
                 >
                   {c.keyword}
+                  <span className="ml-2 inline-flex items-center gap-1 align-middle">
+                    {(c as any).dims?.map((d: DimKey) => (
+                      <i key={`${c.keyword}-${d}`} className={`inline-block h-1.5 w-1.5 rounded-full ${DOT[d]}`} />
+                    ))}
+                  </span>
                 </span>
               </TooltipTrigger>
-              <TooltipContent sideOffset={6}>
-                <div className="flex flex-col gap-0.5">
-                  <span>{`Force ${Math.round(c.strength * 100)}%`}</span>
-                  <span className="opacity-85">{c.matchedDimensions.join(', ')}</span>
+              <TooltipContent side="top" align="center" className="max-w-xs">
+                <p className="text-xs">
+                  Force {Math.round(c.strength * 100)}% — {c.matchedDimensions.join(', ')}
                   {c.boostedBy?.length ? (
-                    <span className="opacity-85">{`Boosté par: ${c.boostedBy.join(', ')}`}</span>
+                    <>
+                      <br />
+                      Boosté par : {c.boostedBy.join(', ')}
+                    </>
                   ) : null}
-                </div>
+                </p>
               </TooltipContent>
             </Tooltip>
           </motion.div>

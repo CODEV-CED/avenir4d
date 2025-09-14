@@ -7,16 +7,16 @@ import clsx from 'clsx';
 type Props = { className?: string };
 
 const DIM_META = {
-  passions:  { label: 'Passions',  color: 'bg-pink-500',    ring: 'ring-pink-400/50' },
-  talents:   { label: 'Talents',   color: 'bg-blue-500',    ring: 'ring-blue-400/50' },
-  utilite:   { label: 'Utilité',   color: 'bg-emerald-500', ring: 'ring-emerald-400/50' },
-  viabilite: { label: 'Viabilité', color: 'bg-yellow-400',  ring: 'ring-yellow-300/50' },
+  passions: { label: 'Passions', color: 'bg-pink-500', ring: 'ring-pink-400/50' },
+  talents: { label: 'Talents', color: 'bg-blue-500', ring: 'ring-blue-400/50' },
+  utilite: { label: 'Utilité', color: 'bg-emerald-500', ring: 'ring-emerald-400/50' },
+  viabilite: { label: 'Viabilité', color: 'bg-yellow-400', ring: 'ring-yellow-300/50' },
 } as const;
 
 export default function IkigaiLegend({ className }: Props) {
   const active = useSweetSpotStore((s) => s.activeDims);
   const toggle = useSweetSpotStore((s) => s.toggleDim);
-  const clear  = useSweetSpotStore((s) => s.clearDims);
+  const clear = useSweetSpotStore((s) => s.clearDims);
 
   return (
     <div className={clsx('flex flex-wrap items-center gap-2', className)}>
@@ -31,7 +31,7 @@ export default function IkigaiLegend({ className }: Props) {
             className={clsx(
               'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 transition',
               isOn ? 'bg-white/90 text-gray-900' : 'bg-white/10 text-white/80 hover:bg-white/15',
-              m.ring
+              m.ring,
             )}
           >
             <span className={clsx('h-2 w-2 rounded-full', m.color)} />
