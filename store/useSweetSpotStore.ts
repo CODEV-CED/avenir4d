@@ -306,7 +306,7 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
       autoAdjust: null,
       autoAdjustedKey: null,
       autoAdjustSeq: 0,
-      // selectedTags: [], // décommentez si vous souhaitez aussi purger les tags
+      selectedTags: [],
     });
 
     // 3) Recalcule immédiat

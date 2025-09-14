@@ -7,6 +7,7 @@ import AutoAdjustBanner from '@/components/AutoAdjustBanner';
 import IkigaiLegend from '@/components/IkigaiLegend';
 import { TooltipProvider } from '@/components/UI/tooltip';
 import IkigaiCanvas from '@/components/IkigaiCanvas';
+import { Button } from '@/components/UI/button';
 
 export default function SweetSpotLabStep() {
   const {
@@ -118,13 +119,14 @@ export default function SweetSpotLabStep() {
         <IkigaiLegend className="mb-1" />
         <div className="mb-3 flex items-center justify-between">
           <div />
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={resetAllPrefs}
-            className="rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/85 hover:bg-white/10"
             title="Réinitialise sliders, boost et filtres"
           >
             Réinitialiser tout
-          </button>
+          </Button>
         </div>
         <p className="mb-3 text-[11px] text-gray-500 sm:hidden">
           Filtrer par dimension. Réinitialiser = tout.
