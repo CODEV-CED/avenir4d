@@ -6,6 +6,7 @@ export type { SliderKey, SliderValues };
 
 // types utiles
 export type Dimension = 'passions' | 'talents' | 'utilite' | 'viabilite';
+export type DimKey = Dimension;
 export type Convergence = {
   keyword: string;
   strength: number;
@@ -40,6 +41,11 @@ export type SweetSpotStore = {
   boostEnabled: boolean;
   setBoostEnabled: (v: boolean) => void;
 
+  /** Filtres actifs (vide = toutes dimensions) */
+  activeDims: DimKey[];
+  toggleDim: (k: DimKey) => void;
+  clearDims: () => void;
+
   setSliderValue: (dimension: SliderKey, rawValue: number) => void;
   setUserKeywords: (kw: Record<Dimension, string[]>) => void;
   fetchConvergences: () => Promise<void>;
@@ -63,6 +69,16 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
   // ✅ état + action
   boostEnabled: true,
   setBoostEnabled: (v) => set({ boostEnabled: v }),
+
+   // filtres de dimensions
+  activeDims: [],
+  toggleDim: (k) =>
+    set((s) => {
+      const on = new Set<DimKey>(s.activeDims);
+      on.has(k) ? on.delete(k) : on.add(k);
+      return { activeDims: Array.from(on) };
+    }),
+  clearDims: () => set({ activeDims: [] }),
 
   setSliderValue: (dimension, rawValue) => {
     const state = get();
