@@ -30,3 +30,7 @@ pnpm test -- --run
 ```
 
 Consultez les exécutions CI: https://github.com/CODEV-CED/avenir4d/actions
+
+## Contributeurs
+
+- Guide IA/Copilot: `.github/copilot-instructions.md`
