@@ -22,6 +22,7 @@ export default function SweetSpotLabStep() {
     boostEnabled,
     setBoostEnabled,
   } = useSweetSpotStore();
+  const resetAllPrefs = useSweetSpotStore((s) => s.resetAllPrefs);
 
   useEffect(() => {
     fetchConvergences();
@@ -115,6 +116,16 @@ export default function SweetSpotLabStep() {
       {/* Légende + Canvas */}
       <TooltipProvider delayDuration={150}>
         <IkigaiLegend className="mb-1" />
+        <div className="mb-3 flex items-center justify-between">
+          <div />
+          <button
+            onClick={resetAllPrefs}
+            className="rounded-md border border-white/15 px-3 py-1.5 text-xs text-white/85 hover:bg-white/10"
+            title="Réinitialise sliders, boost et filtres"
+          >
+            Réinitialiser tout
+          </button>
+        </div>
         <p className="mb-3 text-[11px] text-gray-500 sm:hidden">
           Filtrer par dimension. Réinitialiser = tout.
         </p>

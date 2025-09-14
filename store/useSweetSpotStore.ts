@@ -113,6 +113,9 @@ export type SweetSpotStore = {
   setSliderValue: (dimension: SliderKey, rawValue: number) => void;
   setUserKeywords: (kw: Record<Dimension, string[]>) => void;
   fetchConvergences: () => Promise<void>;
+
+  // Réinitialisation complète des préférences
+  resetAllPrefs: () => void;
 };
 
 export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
@@ -274,5 +277,39 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
       console.error(e);
       set({ isLoading: false });
     }
+  },
+
+  // Réinitialise sliders, boost, filtres et mode puis relance la détection
+  resetAllPrefs: () => {
+    const sliders = defaultSliders();
+    const boostEnabled = true;
+    const activeDims: DimKey[] = [];
+    const filterMode: FilterMode = 'union';
+
+    // 1) Persistance (écrit puis supprime pour repartir propre)
+    savePrefs(sliders, boostEnabled);
+    saveFilters(activeDims, filterMode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(LS_PREFS);
+        localStorage.removeItem(LS_KEY);
+        // Si vous souhaitez conserver les valeurs par défaut, commentez les deux lignes ci-dessus.
+      } catch {}
+    }
+
+    // 2) Mise à jour du store
+    set({
+      sliderValues: sliders,
+      boostEnabled,
+      activeDims,
+      filterMode,
+      autoAdjust: null,
+      autoAdjustedKey: null,
+      autoAdjustSeq: 0,
+      // selectedTags: [], // décommentez si vous souhaitez aussi purger les tags
+    });
+
+    // 3) Recalcule immédiat
+    get().fetchConvergences();
   },
 }));
