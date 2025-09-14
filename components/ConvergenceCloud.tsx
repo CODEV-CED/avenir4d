@@ -26,9 +26,10 @@ export default function ConvergenceCloud({
   const convergences = useSweetSpotStore((s) => s.convergences as StoreConvergence[]);
 
   const items = useMemo(() => {
-    if (!Array.isArray(convergences)) return [] as Array<
-      StoreConvergence & { x: number; y: number; scale: number; opacity: number }
-    >;
+    if (!Array.isArray(convergences))
+      return [] as Array<
+        StoreConvergence & { x: number; y: number; scale: number; opacity: number }
+      >;
 
     const top = [...convergences]
       .filter((c) => c && typeof c.strength === 'number')
@@ -63,7 +64,7 @@ export default function ConvergenceCloud({
           >
             <span
               className={[
-                'select-none rounded-full px-2.5 py-1 text-xs font-medium shadow',
+                'rounded-full px-2.5 py-1 text-xs font-medium shadow select-none',
                 c.boosted
                   ? 'bg-emerald-600/90 text-white ring-1 ring-white/15'
                   : 'bg-white/85 text-gray-900 ring-1 ring-black/10',
