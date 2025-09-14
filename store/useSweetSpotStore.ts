@@ -70,7 +70,7 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
   boostEnabled: true,
   setBoostEnabled: (v) => set({ boostEnabled: v }),
 
-   // filtres de dimensions
+  // filtres de dimensions
   activeDims: [],
   toggleDim: (k) =>
     set((s) => {
