@@ -12,16 +12,19 @@ pnpm dev
 ## Qualité & Tests
 
 - Lint (erreurs bloquantes en CI):
+
 ```bash
 pnpm lint -- --max-warnings=0
 ```
 
 - Typecheck:
+
 ```bash
 pnpm typecheck
 ```
 
 - Tests (Vitest + JSDOM):
+
 ```bash
 pnpm test -- --run
 ```

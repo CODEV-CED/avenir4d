@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import SweetSpotLabStep from '@/components/SweetSpotLabStep';
+import IkigaiCanvas from '@/components/IkigaiCanvas';
 import SweetSpotLabSkeleton from '@/components/skeletons/SweetSpotLabSkeleton';
 import { useSJTProfile } from '@/hooks/useSJTProfile';
 import { useSweetSpotStore } from '@/store/useSweetSpotStore';
@@ -73,6 +74,11 @@ function SweetSpotLabInner() {
   }
 
   // --- Rendu principal ---
-  // Si toutes les gardes sont passées, on affiche le Lab
-  return <SweetSpotLabStep />;
+  // Si toutes les gardes sont passées, on affiche le Canvas + Lab
+  return (
+    <div className="p-4">
+      <IkigaiCanvas />
+      <SweetSpotLabStep />
+    </div>
+  );
 }
