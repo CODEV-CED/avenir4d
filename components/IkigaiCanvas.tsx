@@ -40,8 +40,8 @@ export default function IkigaiCanvas() {
       <div className="absolute inset-0 grid place-items-center">
         <div className="h-4 w-4 rounded-full bg-white/70 shadow-[0_0_30px_rgba(255,255,255,.4)]" />
       </div>
-  {/* Convergence cloud overlay (centered) */}
-  <ConvergenceCloud max={8} baseRadius={110} minRadius={24} />
+      {/* Convergence cloud overlay (centered) */}
+      <ConvergenceCloud max={8} baseRadius={110} minRadius={24} />
       <EurekaFX show={sweetSpotScore > 0.7} />
     </div>
   );

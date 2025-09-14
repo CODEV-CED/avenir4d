@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/UI/tooltip';
 import { useSweetSpotStore, type Convergence as StoreConvergence } from '@/store/useSweetSpotStore';
 
 // hash stable (0..1) from keyword to place chips deterministically
@@ -58,20 +59,30 @@ export default function ConvergenceCloud({
             exit={{ x: 0, y: 0, scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 220, damping: 22 }}
             className="pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
-            title={`Force ${Math.round(c.strength * 100)}% — ${c.matchedDimensions.join(', ')}${
-              c.boostedBy?.length ? `\nBoosté par : ${c.boostedBy.join(', ')}` : ''
-            }`}
           >
-            <span
-              className={[
-                'rounded-full px-2.5 py-1 text-xs font-medium shadow select-none',
-                c.boosted
-                  ? 'bg-emerald-600/90 text-white ring-1 ring-white/15'
-                  : 'bg-white/85 text-gray-900 ring-1 ring-black/10',
-              ].join(' ')}
-            >
-              {c.keyword}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className={[
+                    'rounded-full px-2.5 py-1 text-xs font-medium shadow select-none',
+                    c.boosted
+                      ? 'bg-emerald-600/90 text-white ring-1 ring-white/15'
+                      : 'bg-white/85 text-gray-900 ring-1 ring-black/10',
+                  ].join(' ')}
+                >
+                  {c.keyword}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={6}>
+                <div className="flex flex-col gap-0.5">
+                  <span>{`Force ${Math.round(c.strength * 100)}%`}</span>
+                  <span className="opacity-85">{c.matchedDimensions.join(', ')}</span>
+                  {c.boostedBy?.length ? (
+                    <span className="opacity-85">{`Boosté par: ${c.boostedBy.join(', ')}`}</span>
+                  ) : null}
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </motion.div>
         ))}
       </AnimatePresence>
