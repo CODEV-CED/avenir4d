@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/UI/tooltip';
-import { useSweetSpotStore, type Convergence as StoreConvergence } from '@/store/useSweetSpotStore';
+import { useSweetSpotStore } from '@/store/useSweetSpotStore';
+import type { Convergence as StoreConvergence } from '@/lib/sweetspot/types';
 
 // hash stable (0..1) from keyword to place chips deterministically
 function hash01(s: string) {
@@ -37,10 +38,12 @@ export default function ConvergenceCloud({
   max = 8,
   baseRadius = 110,
   minRadius = 20,
+  avoidCenterRadius = 40,
 }: {
   max?: number;
   baseRadius?: number;
   minRadius?: number;
+  avoidCenterRadius?: number;
 }) {
   const convergences = useSweetSpotStore((s) => s.convergences as StoreConvergence[]);
   const active = useSweetSpotStore((s) => s.activeDims as DimKey[]);
@@ -53,7 +56,7 @@ export default function ConvergenceCloud({
         ? list
         : list.filter((c) => {
             const dims = c.matchedDimensions
-              .map((d) => normDim(String(d)))
+              .map((d: string) => normDim(String(d)))
               .filter(Boolean) as DimKey[];
             if (mode === 'union') {
               return active.some((a) => dims.includes(a));
@@ -68,13 +71,14 @@ export default function ConvergenceCloud({
 
     return top.map((c) => {
       const a = hash01(c.keyword) * Math.PI * 2; // stable angle
-      const r = Math.max(minRadius, (1 - c.strength) * baseRadius); // stronger → closer to center
+      const raw = (1 - c.strength) * baseRadius;
+      const r = Math.max(minRadius, raw, avoidCenterRadius);
       const x = Math.cos(a) * r;
       const y = Math.sin(a) * r;
       const scale = 0.9 + c.strength * 0.5; // 0.9 → 1.4
       const opacity = 0.6 + c.strength * 0.4; // 0.6 → 1.0
       const dims = DIM_KEYS.filter((k) =>
-        c.matchedDimensions.some((d) => normDim(String(d)) === k),
+        c.matchedDimensions.some((d: string) => normDim(String(d)) === k),
       );
       return { ...c, x, y, scale, opacity, dims } as StoreConvergence & {
         x: number;
@@ -87,7 +91,7 @@ export default function ConvergenceCloud({
   }, [convergences, active, mode, max, baseRadius, minRadius]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center">
+    <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center drop-shadow-[0_0_15px_rgba(255,255,255,0.25)] filter">
       <AnimatePresence>
         {items.map((c) => (
           <motion.div
@@ -102,10 +106,8 @@ export default function ConvergenceCloud({
               <TooltipTrigger asChild>
                 <span
                   className={[
-                    'rounded-full px-2.5 py-1 text-xs font-medium shadow ring-1 select-none',
-                    c.boosted
-                      ? 'bg-emerald-600/90 text-white ring-white/15'
-                      : 'bg-white/85 text-gray-900 ring-black/10',
+                    'rounded-md border px-2.5 py-1 text-[13px] shadow-sm backdrop-blur select-none',
+                    'border-white/10 bg-slate-800/90 text-slate-100',
                   ].join(' ')}
                 >
                   {c.keyword}

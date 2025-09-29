@@ -1,0 +1,12 @@
+{
+  "convergences": [
+    {
+      "id": "conv:talents-viabilite:programmation-tech",
+      "dimensions": ["talents", "viabilite"],
+      "keywords": ["programmation", "tech"],
+      "strength": 0.6,
+      "description": "Convergence entre programmation et tech"
+    }
+  ],
+  "options": { "cache": true }
+}

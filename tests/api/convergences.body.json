@@ -1,0 +1,13 @@
+{
+  "profile": {
+    "sliderValues": { "passions": 0.8, "talents": 0.7, "utilite": 0.6, "viabilite": 0.5 },
+    "userKeywords": {
+      "passions": ["création", "design", "innovation"],
+      "talents": ["programmation", "analyse", "créativité"],
+      "utilite": ["impact social", "environnement"],
+      "viabilite": ["tech", "startup"]
+    },
+    "selectedTags": ["Tech", "Impact"]
+  },
+  "options": { "cache": true, "maxResults": 6 }
+}

@@ -64,8 +64,8 @@ export function useQuizSubmission(opts: Options) {
       }
 
       // 2) Envoyer
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const url = `${origin}/api/sjt/submit`;
+      // Use relative path to avoid origin mismatches in dev/proxy setups
+      const url = `/api/sjt/submit`;
 
       const res = await fetch(url, {
         method: 'POST',

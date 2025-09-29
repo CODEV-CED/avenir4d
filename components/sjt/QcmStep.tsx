@@ -1,6 +1,7 @@
 'use client';
 
 import React, { type RefObject, useCallback } from 'react';
+import { H2 } from '@/components/UI/Typography';
 
 type Option = {
   id: string;
@@ -68,7 +69,7 @@ export function QcmStep({
       </div>
 
       {/* Titre */}
-      <h2 className="mb-2 text-xl font-semibold text-white md:text-2xl">{question.title}</h2>
+      <H2 className="mb-2 text-xl font-semibold text-white md:text-2xl">{question.title}</H2>
       {question.subtitle ? <p className="mb-4 text-sm text-white/70">{question.subtitle}</p> : null}
 
       {/* Options */}

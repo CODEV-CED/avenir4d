@@ -1,10 +1,11 @@
-/* Tailwind v4 */
+﻿/* Tailwind v4 */
 
 @import 'tailwindcss';
-/* ✅ le plugin v4 se charge via @plugin après l'import */
+/* … le plugin v4 se charge via @plugin après l'import */
 @plugin "tailwindcss-animate";
+@import '../components/sweet-spot/styles/animations.css';
 
-/* ❌ à supprimer: import inexistant
+/* 🗑️ À supprimer: import inexistant
 @import "tw-animate-css";
 */
 
@@ -13,6 +14,7 @@
 /* ===== Thème NextYou> (dark néon) ===== */
 :root {
   --ny-bg: #0b0b10;
+  --surface-0: #0b0f1a;
   --ny-panel: #101018;
   --ny-text: #e7e7ee;
   --ny-subtext: #a9a9c2;
@@ -26,7 +28,7 @@
   --radius: 0.625rem;
 
   /* tokens UI (compat shadcn) - aligned to neon dark */
-  --background: var(--ny-bg);
+  --background: var(--surface-0);
   --foreground: var(--ny-text);
   --card: oklch(1 0 0);
   --card-foreground: var(--ny-text);
@@ -62,8 +64,21 @@
 /* Corps par défaut */
 html,
 body {
-  background: var(--ny-bg);
+  background: var(--surface-0);
   color: var(--ny-text);
+}
+
+/* Satoshi Variable - user must place .woff2 files in /public/fonts/satoshi/ */
+@font-face {
+  font-family: 'Satoshi Variable';
+  src: url('/fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+html {
+  font-family: 'Satoshi Variable', Inter, sans-serif;
 }
 
 /* ===== Utilitaires maison ===== */
@@ -179,7 +194,7 @@ body {
     @apply border-border outline-ring/50;
   }
   body {
-    background: var(--ny-bg);
+    background: var(--surface-0);
     color: var(--ny-text);
   }
 }
@@ -254,5 +269,146 @@ body {
   }
   .particle {
     animation: particle-pop 900ms ease-out forwards;
+  }
+}
+/* Thème marketing activable via body.marketing ou .marketing-scope */
+/* Variables et fond */
+.marketing,
+.marketing-scope {
+  --mk-bg: #05070f;
+  --mk-panel: rgba(255, 255, 255, 0.06);
+  --mk-border: rgba(255, 255, 255, 0.12);
+  --mk-text: #eef2ff;
+  --mk-sub: #9aa4c7;
+  --mk-grad-from: #a855f7;
+  --mk-grad-to: #22d3ee;
+  --mk-hot: #f59e0b;
+}
+.marketing,
+.marketing-scope {
+  --mk-bg: #05070f;
+  --mk-panel: rgba(255, 255, 255, 0.06);
+  --mk-border: rgba(255, 255, 255, 0.12);
+  --mk-text: #eef2ff;
+  --mk-sub: #9aa4c7;
+  --mk-grad-from: #a855f7;
+  --mk-grad-to: #22d3ee;
+  --mk-hot: #f59e0b;
+}
+body.marketing,
+.marketing,
+.marketing-scope {
+  background:
+    radial-gradient(900px 600px at 75% -10%, rgba(168, 85, 247, 0.22), transparent 60%),
+    radial-gradient(700px 500px at -10% 40%, rgba(34, 211, 238, 0.15), transparent 60%),
+    var(--mk-bg);
+  color: var(--mk-text);
+}
+.marketing-scope {
+  color: var(--mk-text);
+}
+
+.marketing .mk-card,
+.marketing-scope .mk-card {
+  background: var(--mk-panel);
+  border: 1px solid var(--mk-border);
+  border-radius: 16px;
+  backdrop-filter: saturate(120%) blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.marketing .mk-grad-text,
+.marketing-scope .mk-grad-text {
+  background: linear-gradient(90deg, var(--mk-grad-from), var(--mk-grad-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hide any stray <img> inside the marketing header so the BrandLockup
+   background-based logo remains the single visible brand element. */
+.marketing-scope header img {
+  display: none !important;
+}
+
+/* text-gradient utility for titles */
+.text-gradient {
+  background: linear-gradient(90deg, var(--mk-grad-from), var(--mk-grad-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* --- Ikigaï Lab tokens --- */
+:root {
+  --surface: rgba(30, 41, 59, 0.55); /* slate-800/55 */
+  --surface-2: rgba(15, 23, 42, 0.5);
+  --stroke: rgba(148, 163, 184, 0.18); /* slate-400/18 */
+  --muted: rgba(226, 232, 240, 0.65); /* slate-200/65 */
+}
+
+@layer components {
+  /* Carte noir profond – à utiliser partout */
+  .card {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--surface-0);
+    padding: 1.25rem;
+    backdrop-filter: none;
+  }
+
+  /* Petit utilitaire si tu veux des surfaces vides sans cadre */
+  .card-ghost {
+    background: transparent;
+    border-color: transparent;
+    padding: 0;
+  }
+
+  .card-soft {
+    @apply rounded-xl border px-4 py-3 backdrop-blur;
+    border-color: var(--stroke);
+    background: var(--surface-2);
+  }
+
+  .section-title {
+    @apply mb-2 text-lg font-semibold text-white;
+  }
+
+  .section-sub {
+    @apply mb-3 text-xs text-white/60;
+  }
+
+  .kbd {
+    @apply rounded-md border px-1.5 py-0.5 text-[10px] leading-none;
+    border-color: var(--stroke);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .card {
+    padding: 1rem !important;
+  }
+  h2 {
+    font-size: 1.125rem !important;
+  }
+  .slider-custom {
+    height: 32px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (pointer: coarse) {
+  .slider-custom::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  .slider-custom::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
   }
 }

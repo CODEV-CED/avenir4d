@@ -1,15 +1,40 @@
 // lib/supabase/formations-service.ts
 import 'server-only';
 import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import type { Facets, FormationRow, FormationsQuery, SortKey } from './formations-types';
 
 // Si tu n'as pas encore les types générés Supabase,
 // garde Database = any pour éviter les erreurs bloquantes.
 type Database = any;
 
-function getClient() {
-  return createServerComponentClient<Database>({ cookies });
+async function getClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try {
+              (
+                cookieStore as unknown as {
+                  set?: (name: string, value: string, options?: any) => void;
+                }
+              ).set?.(name, value, options);
+            } catch {
+              // In RSC context, cookies may be read-only; ignore failures.
+            }
+          });
+        },
+      },
+    },
+  );
 }
 
 const SELECT_COLUMNS = [
@@ -52,7 +77,7 @@ function applySort(qb: any, sort: SortKey | undefined) {
 export async function fetchFormations(params: FormationsQuery): Promise<FormationRow[]> {
   const { types, city, durationMax, sort = 'score', limit = 24, offset = 0 } = params;
 
-  const supabase = getClient();
+  const supabase = await getClient();
 
   let qb = supabase.from('formations').select(SELECT_COLUMNS);
 
@@ -88,7 +113,7 @@ export async function fetchFormations(params: FormationsQuery): Promise<Formatio
  * Facettes pour menus (types, villes) – uniques & triées.
  */
 export async function fetchFacets(): Promise<Facets> {
-  const supabase = getClient();
+  const supabase = await getClient();
 
   const { data, error } = await supabase.from('formations').select('type, ville');
 

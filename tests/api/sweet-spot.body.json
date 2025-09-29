@@ -1,0 +1,9 @@
+{
+  "keywords": {
+    "passions": ["création", "design", "innovation"],
+    "talents": ["programmation", "analyse", "créativité"],
+    "utilite": ["impact social", "environnement"],
+    "viabilite": ["tech", "startup"]
+  },
+  "options": { "cache": true }
+}

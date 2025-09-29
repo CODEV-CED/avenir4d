@@ -1,35 +1,45 @@
-'use client';
-import { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import HeroPitch from '@/components/marketing/HeroPitch';
-// ... (tes imports actuels : FiltersBar, FormationCard, MesVoeuxPanel, useVoeux, dataset, etc.)
+import Navbar from '@/components/marketing/Navbar';
+import Hero from '@/components/marketing/Hero';
+import FeatureGrid from '@/components/marketing/FeatureGrid';
+import ProcessTimeline from '@/components/landing/ProcessTimeline';
+import ProductPreview from '@/components/landing/ProductPreview';
+import Testimonials from '@/components/landing/Testimonials';
+import Pricing from '@/components/landing/Pricing';
+import FAQ from '@/components/landing/FAQ';
+import FinalCTA from '@/components/landing/FinalCTA';
 
-export default function AccueilPage() {
+export const metadata = {
+  title: 'NextYou - Ton futur, version toi',
+  description: "Ikigaï + IA pour trouver ton Sweet Spot et passer à l'action.",
+};
+
+export default function HomePage() {
   return (
-    <Suspense fallback={null}>
-      <HomeInner />
-    </Suspense>
-  );
-}
+    <div className="marketing-scope min-h-dvh bg-[#05070f] text-white">
+      <Navbar />
+      <main>
+        <Hero />
 
-function HomeInner() {
-  const sp = useSearchParams();
-  useEffect(() => {
-    const wantReco = sp?.get('from') === 'sjt' || window.location.hash === '#reco';
-    if (wantReco) {
-      setTimeout(() => {
-        document.getElementById('reco')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
-    }
-  }, [sp]);
+        <FeatureGrid />
 
-  return (
-    <div className="min-h-screen bg-[#0b0b10] text-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6">
-        <HeroPitch />
-        <div id="reco" className="h-6" />
-        {/* ensuite: aside Filtres + main Liste + panel Vœux exactement comme déjà en place */}
-      </div>
+        <ProcessTimeline />
+
+        <ProductPreview />
+
+        <Testimonials />
+
+        <Pricing />
+
+        <FAQ />
+
+        <FinalCTA />
+      </main>
+
+      <footer className="border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-white/60">
+          &copy; {new Date().getFullYear()} NextYou&gt; - Tous droits réservés.
+        </div>
+      </footer>
     </div>
   );
 }

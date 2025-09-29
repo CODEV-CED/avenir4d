@@ -24,6 +24,7 @@ export default [
       '**/build/**',
       '**/coverage/**',
       '**/.vercel/**',
+      '**/temp_update_keywords.js',
     ],
   },
   js.configs.recommended,

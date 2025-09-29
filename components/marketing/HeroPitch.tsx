@@ -1,20 +1,27 @@
 // components/marketing/HeroPitch.tsx
 import Link from 'next/link';
+import BrandLogo from '@/components/shell/BrandLogo';
+import { H1, Paragraph } from '@/components/UI/Typography';
 import { SparklesIcon, RocketLaunchIcon, CubeTransparentIcon } from '@heroicons/react/24/outline';
 
 export default function HeroPitch() {
   return (
-    <section className="relative mx-auto w-full max-w-5xl px-6 py-24 text-center sm:py-32">
-      {/* Titre */}
-      <h1 className="text-3xl font-extrabold tracking-tight text-balance text-white sm:text-5xl">
-        <span className="text-white/80">Découvre </span>
-        <span className="bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
-          NextYou&gt;
-        </span>
-      </h1>
+    <section className="relative mx-auto w-full max-w-5xl px-6 py-20 sm:py-28">
+      {/* Titre avec logo inline à gauche */}
+      <div className="flex items-center justify-center gap-4 text-center sm:gap-6">
+        <div className="hidden sm:block">
+          <BrandLogo size="xl" />
+        </div>
+        <H1 className="text-3xl text-balance sm:text-5xl">
+          <span className="text-white/80">Découvre </span>
+          <span className="bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            NextYou&gt;
+          </span>
+        </H1>
+      </div>
 
       {/* Paragraphe */}
-      <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/70">
+      <Paragraph className="mx-auto mt-6 max-w-2xl leading-8 text-white/70">
         Choisir quoi faire après le bac, c’est comme ouvrir Netflix sans savoir quoi regarder : trop
         de choix, zéro aide, et tu finis bloqué. Avec Parcoursup, c’est encore pire — NextYou te
         simplifie la vie. On mixe l’<strong>Ikigaï</strong> (méthode japonaise) avec une IA qui ne
@@ -24,7 +31,7 @@ export default function HeroPitch() {
           Bref : NextYou&gt;, ce n’est pas un test bidon, c’est la boussole qui t’aide à avancer
           sans paniquer.
         </strong>
-      </p>
+      </Paragraph>
 
       {/* Points clés */}
       <ul className="mt-8 inline-grid gap-x-8 gap-y-4 text-left sm:grid-cols-3 md:gap-x-12">

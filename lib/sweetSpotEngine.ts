@@ -1,57 +1,96 @@
-export type Dimension = 'passions' | 'talents' | 'utilite' | 'viabilite';
-
 export type SweetSpotInput = {
-  weights: Record<Dimension, number>;
-  keywords: Record<Dimension, string[]>;
-  boostTags?: string[]; // ⬅️ ajouté
+  weights: { passions: number; talents: number; utilite: number; viabilite: number };
+  keywords: { passions: string[]; talents: string[]; utilite: string[]; viabilite: string[] };
+  boostTags?: string[];
+  boostEnabled?: boolean;
 };
 
 export type Convergence = {
   keyword: string;
-  strength: number; // 0..1+
-  matchedDimensions: Dimension[];
-  boosted?: boolean;
-  boostedBy?: string[];
+  dims: string[];
+  matchedDimensions?: string[];
+  strength: number;
+};
+export type SweetSpotResult = {
+  score: number;
+  convergences: Convergence[];
+  metrics: { quad: number; tri: number; inter: number; union: number; maxStrength: number };
 };
 
-export function detectConvergences(input: SweetSpotInput) {
-  const scoreMap: Record<string, Convergence> = {};
-  const dims = Object.keys(input.keywords) as Dimension[];
+export type TuningPresetConfig = {
+  weights: { passions: number; talents: number; utilite: number; viabilite: number };
+  label: string;
+  // lib/sweetSpotEngine.ts
+};
 
-  // 1) accumulation par dimension
+export type TuningPreset = 'balanced' | 'strict' | 'lax';
+
+const dims: (keyof SweetSpotInput['keywords'])[] = ['passions', 'talents', 'utilite', 'viabilite'];
+
+export function detectConvergences(input: SweetSpotInput, topK = 20): SweetSpotResult {
+  const { weights, keywords, boostTags = [], boostEnabled } = input;
+
+  const map = new Map<string, Set<string>>();
   for (const d of dims) {
-    for (const k of input.keywords[d] ?? []) {
-      const key = k.trim();
-      if (!key) continue;
-      if (!scoreMap[key]) {
-        scoreMap[key] = { keyword: key, strength: 0, matchedDimensions: [] };
-      }
-      scoreMap[key].strength += input.weights[d] || 0;
-      if (!scoreMap[key].matchedDimensions.includes(d)) {
-        scoreMap[key].matchedDimensions.push(d);
-      }
+    for (const kw of keywords[d] || []) {
+      const k = norm(kw);
+      if (!k) continue;
+      if (!map.has(k)) map.set(k, new Set());
+      map.get(k)!.add(d);
     }
   }
 
-  // 2) boost par tags sélectionnés
-  const boost = new Set((input.boostTags ?? []).map((s) => s.toLowerCase()));
-  const BOOST_AMOUNT = 0.25; // ⚖️ règle simple
-  for (const k in scoreMap) {
-    const kl = k.toLowerCase();
-    const hits = Array.from(boost).filter((t) => kl === t || kl.includes(t));
-    if (hits.length) {
-      scoreMap[k].strength += BOOST_AMOUNT;
-      scoreMap[k].boosted = true;
-      scoreMap[k].boostedBy = hits;
-    }
+  const conv: Convergence[] = [];
+  const weightSum = dims.reduce((a, d) => a + weights[d], 0) || 1;
+
+  for (const [k, setDims] of map.entries()) {
+    const present = Array.from(setDims);
+    const count = present.length;
+    const weightCover =
+      present.reduce((a, d) => a + weights[d as keyof typeof weights], 0) / weightSum;
+    const density = (count - 1) / 3;
+    const boosted = boostEnabled && boostTags?.includes(k) ? 1.15 : 1.0;
+    const strength = clamp(weightCover * 0.6 + density * 0.4, 0, 1) * boosted;
+
+    conv.push({
+      keyword: k,
+      dims: present,
+      matchedDimensions: present, // nouveau champ ajouté
+      strength: Math.min(strength, 1),
+    });
   }
 
-  // 3) filtrer mots présents dans ≥ 2 dimensions
-  const convergences = Object.values(scoreMap).filter((c) => c.matchedDimensions.length >= 2);
+  const union = map.size;
+  const inter = Array.from(map.values()).filter((s) => s.size === 4).length;
+  const tri = Array.from(map.values()).filter((s) => s.size >= 3).length;
+  const quad = inter;
 
-  // 4) score global (calibrage simple)
-  const total = convergences.reduce((s, c) => s + c.strength, 0);
-  const score = Math.min(total / 2, 1);
+  const maxStrength = conv.reduce((m, c) => Math.max(m, c.strength), 0);
+  const triCoverage = union ? tri / union : 0;
+  const quadCoverage = union ? quad / union : 0;
 
-  return { convergences, score };
+  let score = 0.45 * maxStrength + 0.35 * triCoverage + 0.2 * quadCoverage;
+
+  score = clamp(score, 0, 1);
+
+  conv.sort((a, b) => b.strength - a.strength);
+  const top = conv.slice(0, topK);
+
+  return {
+    score,
+    convergences: top,
+    metrics: { quad, tri, inter, union, maxStrength },
+  };
+}
+
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
+}
+
+function norm(s: string) {
+  return (s || '')
+    .toLowerCase()
+    .trim()
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '');
 }
