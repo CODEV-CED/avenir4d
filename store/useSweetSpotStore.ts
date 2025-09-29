@@ -1,5 +1,14 @@
 import { create } from 'zustand';
-import { GAP, clamp, type SliderKey, type SliderValues } from './sliderConstraints';
+import {
+  GAP,
+  MIN_VIAB,
+  applySliderConstraintVerbose,
+  type SliderKey,
+  type SliderValues,
+  type AutoAdjustEvent,
+} from './sliderConstraints';
+import type { TuningPreset } from '@/lib/sweetSpotEngine';
+import type { ResultMeta, Convergence } from '@/lib/sweetspot/types';
 
 // Re-export types if needed elsewhere
 export type { SliderKey, SliderValues };
@@ -8,21 +17,31 @@ export type { SliderKey, SliderValues };
 export type Dimension = 'passions' | 'talents' | 'utilite' | 'viabilite';
 export type DimKey = Dimension;
 export type FilterMode = 'union' | 'intersection';
-export type Convergence = {
-  keyword: string;
-  strength: number;
-  matchedDimensions: Dimension[];
-  boosted?: boolean;
-  boostedBy?: string[];
-};
+// Convergence type now comes from shared types
+
+// Debounce handle for detect
+let detectTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Normalize keywords: trim and collapse spaces
+function norm(s: string): string {
+  return (s || '').replace(/\s+/g, ' ').trim();
+}
+
+// Tag normalization (lowercase + trimmed + max length)
+function normTag(s: string): string {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 64);
+}
 
 // Persistence helpers for dimension filters
 const LS_KEY = 'ikigaiFilters.v1';
+function defaultFilterState(): { activeDims: DimKey[]; filterMode: FilterMode } {
+  return { activeDims: [], filterMode: 'union' };
+}
 function loadFilters(): { activeDims: DimKey[]; filterMode: FilterMode } {
-  if (typeof window === 'undefined') return { activeDims: [], filterMode: 'union' };
+  if (typeof window === 'undefined') return defaultFilterState();
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return { activeDims: [], filterMode: 'union' };
+    if (!raw) return defaultFilterState();
     const parsed = JSON.parse(raw);
     const dims = Array.isArray(parsed.activeDims)
       ? (parsed.activeDims.filter((d: string) =>
@@ -32,7 +51,7 @@ function loadFilters(): { activeDims: DimKey[]; filterMode: FilterMode } {
     const mode: FilterMode = parsed.filterMode === 'intersection' ? 'intersection' : 'union';
     return { activeDims: Array.from(new Set(dims)), filterMode: mode };
   } catch {
-    return { activeDims: [], filterMode: 'union' };
+    return defaultFilterState();
   }
 }
 function saveFilters(activeDims: DimKey[], filterMode: FilterMode) {
@@ -47,31 +66,40 @@ const LS_PREFS = 'ikigaiPrefs.v1';
 function defaultSliders(): SliderValues {
   return { passions: 0.25, talents: 0.25, utilite: 0.25, viabilite: 0.25 };
 }
-function loadPrefs(): { sliders: SliderValues; boostEnabled: boolean } {
+function defaultPrefsState(): {
+  sliders: SliderValues;
+  boostEnabled: boolean;
+  preset: TuningPreset;
+} {
+  return { sliders: defaultSliders(), boostEnabled: true, preset: 'balanced' as TuningPreset };
+}
+function loadPrefs(): { sliders: SliderValues; boostEnabled: boolean; preset: TuningPreset } {
   if (typeof window === 'undefined') {
-    return { sliders: defaultSliders(), boostEnabled: true };
+    return defaultPrefsState();
   }
   try {
     const raw = localStorage.getItem(LS_PREFS);
-    if (!raw) return { sliders: defaultSliders(), boostEnabled: true };
+    if (!raw) return defaultPrefsState();
     const parsed = JSON.parse(raw);
     const s = parsed?.sliders ?? {};
     const sliders: SliderValues = {
       passions: typeof s.passions === 'number' ? s.passions : 0.25,
       talents: typeof s.talents === 'number' ? s.talents : 0.25,
       utilite: typeof s.utilite === 'number' ? s.utilite : 0.25,
-      viabilite: typeof s.viabilite === 'number' ? Math.max(0.15, s.viabilite) : 0.25,
+      viabilite: typeof s.viabilite === 'number' ? Math.max(MIN_VIAB, s.viabilite) : 0.25,
     };
     const boost = typeof parsed?.boostEnabled === 'boolean' ? parsed.boostEnabled : true;
-    return { sliders, boostEnabled: boost };
+    const preset: TuningPreset =
+      parsed?.preset === 'lax' || parsed?.preset === 'strict' ? parsed.preset : 'balanced';
+    return { sliders, boostEnabled: boost, preset };
   } catch {
-    return { sliders: defaultSliders(), boostEnabled: true };
+    return defaultPrefsState();
   }
 }
-function savePrefs(sliders: SliderValues, boostEnabled: boolean) {
+function savePrefs(sliders: SliderValues, boostEnabled: boolean, preset: TuningPreset) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(LS_PREFS, JSON.stringify({ sliders, boostEnabled }));
+    localStorage.setItem(LS_PREFS, JSON.stringify({ sliders, boostEnabled, preset }));
   } catch {}
 }
 
@@ -81,25 +109,34 @@ export type SweetSpotStore = {
   sliderValues: SliderValues;
   convergences: Convergence[];
   sweetSpotScore: number;
+  resultMeta: ResultMeta | null;
   isLoading: boolean;
+  keywordsDirty: boolean;
+  savingKeywords: boolean;
   // UX: last auto-adjusted slider + sequence for animation triggers
   autoAdjustedKey: SliderKey | null;
   autoAdjustSeq: number;
   // Banner event describing auto-adjustments
-  autoAdjust: null | {
-    at: number;
-    type: 'gap' | 'viabilityMin' | 'clamp';
-    adjusted: { key: SliderKey; from: number; to: number } | null;
-  };
+  autoAdjust: AutoAdjustEvent | null;
   clearAutoAdjust: () => void;
 
   // TAGS pour le boost
   selectedTags: string[];
+  candidateTags: string[];
   setSelectedTags: (tags: string[]) => void;
+  addTag: (t: string) => void;
+  removeTag: (t: string) => void;
+  hydrateTagsFromKeywords: () => void; // auto à partir des keywords
+  refreshCandidates: () => void; // (keywords + convergences)
+  searchTagSuggestions: (q: string) => Promise<string[]>; // via API
 
   // ✅ nouveau
   boostEnabled: boolean;
   setBoostEnabled: (v: boolean) => void;
+
+  // Tuning preset for engine
+  tuningPreset: TuningPreset;
+  setTuningPreset: (p: TuningPreset) => void;
 
   /** Filtres actifs (vide = toutes dimensions) */
   activeDims: DimKey[];
@@ -113,203 +150,314 @@ export type SweetSpotStore = {
   setSliderValue: (dimension: SliderKey, rawValue: number) => void;
   setUserKeywords: (kw: Record<Dimension, string[]>) => void;
   fetchConvergences: () => Promise<void>;
+  debouncedDetect: () => void;
+  addKeyword: (dim: DimKey, kw: string) => void;
+  removeKeyword: (dim: DimKey, kw: string) => void;
+  saveKeywords: (profileId: string) => Promise<void>;
+  seedDemoKeywords: () => void;
 
   // Réinitialisation complète des préférences
   resetAllPrefs: () => void;
 };
 
-export const useSweetSpotStore = create<SweetSpotStore>((set, get) => ({
-  // Load persisted filters (no-op on server) but ensure defaults present
-  activeDims: loadFilters().activeDims,
-  filterMode: loadFilters().filterMode,
+export const useSweetSpotStore = create<SweetSpotStore>((set, get) => {
+  const baseFilters = defaultFilterState();
+  const basePrefs = defaultPrefsState();
 
-  userKeywords: { passions: [], talents: [], utilite: [], viabilite: [] },
-  sliderValues: loadPrefs().sliders,
-  convergences: [],
-  sweetSpotScore: 0,
-  isLoading: false,
-  autoAdjustedKey: null,
-  autoAdjustSeq: 0,
-  autoAdjust: null,
-  clearAutoAdjust: () => set({ autoAdjust: null }),
-
-  selectedTags: [],
-  setSelectedTags: (tags) =>
-    set({ selectedTags: Array.from(new Set(tags.map((t) => t.toLowerCase()))) }),
-
-  // ✅ état + action
-  boostEnabled: loadPrefs().boostEnabled,
-  setBoostEnabled: (v) => {
-    set({ boostEnabled: v });
-    savePrefs(get().sliderValues, v);
-  },
-
-  // filtres de dimensions
-  toggleDim: (k) =>
-    set((s) => {
-      const on = new Set<DimKey>(s.activeDims);
-      on.has(k) ? on.delete(k) : on.add(k);
-      const next = Array.from(on);
-      saveFilters(next, s.filterMode);
-      return { activeDims: next };
-    }),
-  clearDims: () =>
-    set((s) => {
-      saveFilters([], s.filterMode);
-      return { activeDims: [] };
-    }),
-
-  setFilterMode: (m) =>
-    set((s) => {
-      saveFilters(s.activeDims, m);
-      return { filterMode: m };
-    }),
-
-  setSliderValue: (dimension, rawValue) => {
-    const state = get();
-    const prev = state.sliderValues;
-    const prevVal = prev[dimension];
-
-    const lower = dimension === 'viabilite' ? 0.15 : 0;
-    const others = Object.entries(prev)
-      .filter(([k]) => k !== dimension)
-      .map(([, v]) => v) as number[];
-    const minOther = Math.min(...others);
-    const maxOther = Math.max(...others);
-
-    // 1) clamp local + fenêtre autorisée par les autres
-    let nextVal = clamp(rawValue, lower, 1);
-    const allowedMin = Math.max(maxOther - GAP, lower);
-    const allowedMax = Math.min(minOther + GAP, 1);
-    const beforeClamp = nextVal;
-    nextVal = clamp(nextVal, allowedMin, allowedMax);
-
-    let evt: null | {
-      at: number;
-      type: 'gap' | 'viabilityMin' | 'clamp';
-      adjusted: { key: SliderKey; from: number; to: number } | null;
-    } = null;
-    if (dimension === 'viabilite' && nextVal !== rawValue && rawValue < 0.15) {
-      evt = {
-        at: Date.now(),
-        type: 'viabilityMin',
-        adjusted: { key: 'viabilite', from: rawValue, to: nextVal },
-      };
-    } else if (nextVal !== beforeClamp) {
-      evt = {
-        at: Date.now(),
-        type: 'clamp',
-        adjusted: { key: dimension, from: beforeClamp, to: nextVal },
-      };
-    }
-
-    // 2) construit l’état
-    const next: SliderValues = { ...prev, [dimension]: nextVal };
-
-    // 3) si la plage globale dépasse, ajuste l’extrême opposé
-    const entries = Object.entries(next) as [SliderKey, number][];
-    const minEntry = entries.reduce((a, b) => (a[1] <= b[1] ? a : b));
-    const maxEntry = entries.reduce((a, b) => (a[1] >= b[1] ? a : b));
-    const range = maxEntry[1] - minEntry[1];
-
-    if (range > GAP) {
-      if (nextVal >= prevVal) {
-        const target = maxEntry[1] - GAP; // remonte le minimum
-        const key = minEntry[0];
-        const lb = key === 'viabilite' ? 0.15 : 0;
-        const from = next[key];
-        next[key] = clamp(target, lb, 1);
-        evt = { at: Date.now(), type: 'gap', adjusted: { key, from, to: next[key] } };
-      } else {
-        const target = minEntry[1] + GAP; // baisse le maximum
-        const key = maxEntry[0];
-        const from = next[key];
-        next[key] = clamp(target, 0, 1);
-        evt = { at: Date.now(), type: 'gap', adjusted: { key, from, to: next[key] } };
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      const { sliders, boostEnabled, preset } = loadPrefs();
+      const { activeDims, filterMode } = loadFilters();
+      const current = get();
+      const sliderKeys = Object.keys(sliders) as SliderKey[];
+      const slidersChanged = sliderKeys.some((key) => current.sliderValues[key] !== sliders[key]);
+      const dimsChanged =
+        current.activeDims.length !== activeDims.length ||
+        current.activeDims.some((dim, index) => dim !== activeDims[index]);
+      if (
+        !slidersChanged &&
+        current.boostEnabled === boostEnabled &&
+        current.tuningPreset === preset &&
+        current.filterMode === filterMode &&
+        !dimsChanged
+      ) {
+        return;
       }
-    }
-
-    // detect auto-adjusted key (other than the actively moved one) for pulses
-    let autoKey: SliderKey | null = null;
-    (Object.keys(next) as SliderKey[]).some((k) => {
-      if (k === dimension) return false;
-      if (Math.abs(next[k] - prev[k]) > 1e-6) {
-        autoKey = k;
-        return true;
-      }
-      return false;
-    });
-
-    set((s) => ({
-      sliderValues: next,
-      autoAdjustedKey: autoKey,
-      autoAdjustSeq: autoKey ? s.autoAdjustSeq + 1 : s.autoAdjustSeq,
-      autoAdjust: evt,
-    }));
-    // persist sliders + boost
-    savePrefs(next, get().boostEnabled);
-    get().fetchConvergences();
-  },
-
-  setUserKeywords: (kw) => set({ userKeywords: kw }),
-
-  fetchConvergences: async () => {
-    const { sliderValues, userKeywords, selectedTags, boostEnabled } = get();
-    set({ isLoading: true });
-    try {
-      const res = await fetch('/api/sweet-spot/detect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          weights: sliderValues,
-          keywords: userKeywords,
-          boostTags: selectedTags,
-          boostEnabled,
-        }),
-      });
-      const data = await res.json();
       set({
-        convergences: data.convergences ?? [],
-        sweetSpotScore: data.score ?? 0,
-        isLoading: false,
+        sliderValues: sliders,
+        boostEnabled,
+        tuningPreset: preset,
+        activeDims,
+        filterMode,
       });
-    } catch (e) {
-      console.error(e);
-      set({ isLoading: false });
-    }
-  },
+    }, 0);
+  }
 
-  // Réinitialise sliders, boost, filtres et mode puis relance la détection
-  resetAllPrefs: () => {
-    const sliders = defaultSliders();
-    const boostEnabled = true;
-    const activeDims: DimKey[] = [];
-    const filterMode: FilterMode = 'union';
+  return {
+    activeDims: baseFilters.activeDims,
+    filterMode: baseFilters.filterMode,
 
-    // 1) Persistance (écrit puis supprime pour repartir propre)
-    savePrefs(sliders, boostEnabled);
-    saveFilters(activeDims, filterMode);
-    if (typeof window !== 'undefined') {
+    userKeywords: { passions: [], talents: [], utilite: [], viabilite: [] },
+    sliderValues: basePrefs.sliders,
+    convergences: [],
+    sweetSpotScore: 0,
+    resultMeta: null,
+    isLoading: false,
+    keywordsDirty: false,
+    savingKeywords: false,
+    autoAdjustedKey: null,
+    autoAdjustSeq: 0,
+    autoAdjust: null,
+    clearAutoAdjust: () => set({ autoAdjust: null }),
+
+    selectedTags: [],
+    candidateTags: [],
+    setSelectedTags: (tags) => {
+      const uniq = Array.from(new Set(tags.map(normTag)))
+        .filter(Boolean)
+        .slice(0, 12);
+      set({ selectedTags: uniq });
+    },
+    addTag: (t) => {
+      const v = normTag(t);
+      if (!v) return;
+      set((s) => {
+        const next = Array.from(new Set([...s.selectedTags, v])).slice(0, 12);
+        return { selectedTags: next } as any;
+      });
+      get().debouncedDetect?.();
+    },
+    removeTag: (t) => {
+      const v = normTag(t);
+      set((s) => ({ selectedTags: s.selectedTags.filter((x) => x !== v) }));
+      get().debouncedDetect?.();
+    },
+    hydrateTagsFromKeywords: () => {
+      const { userKeywords, convergences } = get() as any;
+      const pool = [
+        ...(userKeywords?.passions ?? []),
+        ...(userKeywords?.talents ?? []),
+        ...(userKeywords?.utilite ?? []),
+        ...(userKeywords?.viabilite ?? []),
+        ...(Array.isArray(convergences) ? convergences.map((c: any) => c.keyword) : []),
+      ]
+        .map(normTag)
+        .filter(Boolean);
+
+      const freq = new Map<string, number>();
+      for (const k of pool) freq.set(k, (freq.get(k) ?? 0) + 1);
+
+      const top = Array.from(freq.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([k]) => k)
+        .slice(0, 8);
+
+      set({ candidateTags: top });
+      if (get().selectedTags.length === 0 && top.length) {
+        set({ selectedTags: top.slice(0, 3) });
+      }
+    },
+    refreshCandidates: () => {
+      get().hydrateTagsFromKeywords();
+    },
+    searchTagSuggestions: async (q: string) => {
+      const query = (q || '').trim();
+      if (!query) {
+        const cs = get().candidateTags;
+        return cs.length ? cs : [];
+      }
       try {
-        localStorage.removeItem(LS_PREFS);
-        localStorage.removeItem(LS_KEY);
-        // Si vous souhaitez conserver les valeurs par défaut, commentez les deux lignes ci-dessus.
+        const res = await fetch(`/api/tags/suggest?q=${encodeURIComponent(query)}&limit=8`, {
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (Array.isArray(json?.tags)) {
+          const canon = json.tags
+            .map((t: any) => normTag(String(t?.label ?? t?.slug ?? t)))
+            .filter(Boolean);
+          set((s) => ({
+            candidateTags: Array.from(new Set([...canon, ...s.candidateTags])).slice(0, 20),
+          }));
+          return canon;
+        }
       } catch {}
-    }
+      return [];
+    },
 
-    // 2) Mise à jour du store
-    set({
-      sliderValues: sliders,
-      boostEnabled,
-      activeDims,
-      filterMode,
-      autoAdjust: null,
-      autoAdjustedKey: null,
-      autoAdjustSeq: 0,
-      selectedTags: [],
-    });
+    // ✅ état + action
+    boostEnabled: basePrefs.boostEnabled,
+    setBoostEnabled: (v) => {
+      set({ boostEnabled: v });
+      savePrefs(get().sliderValues, v, get().tuningPreset);
+    },
 
-    // 3) Recalcule immédiat
-    get().fetchConvergences();
-  },
-}));
+    tuningPreset: basePrefs.preset,
+    setTuningPreset: (p) => {
+      set({ tuningPreset: p });
+      // persist alongside sliders and boost
+      savePrefs(get().sliderValues, get().boostEnabled, p);
+      // retrigger detection with new preset
+      get().fetchConvergences();
+    },
+
+    // filtres de dimensions
+    toggleDim: (k) =>
+      set((s) => {
+        const on = new Set<DimKey>(s.activeDims);
+        on.has(k) ? on.delete(k) : on.add(k);
+        const next = Array.from(on);
+        saveFilters(next, s.filterMode);
+        return { activeDims: next };
+      }),
+    clearDims: () =>
+      set((s) => {
+        saveFilters([], s.filterMode);
+        return { activeDims: [] };
+      }),
+
+    setFilterMode: (m) =>
+      set((s) => {
+        saveFilters(s.activeDims, m);
+        return { filterMode: m };
+      }),
+
+    setSliderValue: (dimension, rawValue) => {
+      const prev = get().sliderValues;
+
+      // ← récupère exactement ce que renvoie la version verbose
+      const { next, evt, autoKey } = applySliderConstraintVerbose(prev, dimension, rawValue);
+
+      set((s) => ({
+        sliderValues: next,
+        autoAdjustedKey: autoKey,
+        autoAdjustSeq: autoKey ? s.autoAdjustSeq + 1 : s.autoAdjustSeq,
+        autoAdjust: evt, // ← c’est bien “evt” renvoyé par la fonction verbose
+      }));
+
+      savePrefs(next, get().boostEnabled, get().tuningPreset);
+      get().fetchConvergences();
+    },
+
+    setUserKeywords: (kw) => set({ userKeywords: kw }),
+
+    seedDemoKeywords: () =>
+      set({
+        userKeywords: {
+          passions: ['design', 'ia', 'education'],
+          talents: ['design', 'ui', 'ia'],
+          utilite: ['impact', 'education', 'design'],
+          viabilite: ['design', 'freelance', 'saas'],
+        },
+      }),
+
+    debouncedDetect: () => {
+      if (detectTimer) clearTimeout(detectTimer);
+      detectTimer = setTimeout(() => get().fetchConvergences(), 300);
+    },
+
+    addKeyword: (dim, kw) => {
+      const v = norm(kw);
+      if (!v) return;
+      set((s) => {
+        const cur = s.userKeywords[dim] || [];
+        const exists = cur.some((x) => x.toLowerCase() === v.toLowerCase());
+        if (exists) return s as any;
+        return {
+          userKeywords: { ...s.userKeywords, [dim]: [...cur, v] },
+          keywordsDirty: true,
+        } as any;
+      });
+      get().debouncedDetect();
+    },
+
+    removeKeyword: (dim, kw) => {
+      set((s) => ({
+        userKeywords: {
+          ...s.userKeywords,
+          [dim]: (s.userKeywords[dim] || []).filter((x) => x.toLowerCase() !== kw.toLowerCase()),
+        },
+        keywordsDirty: true,
+      }));
+      get().debouncedDetect();
+    },
+
+    saveKeywords: async (profileId) => {
+      if (!profileId) return;
+      set({ savingKeywords: true });
+      try {
+        const res = await fetch('/api/sweet-spot/keywords', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: profileId, keywords: get().userKeywords }),
+        });
+        const json = await res.json();
+        if (!res.ok || json?.ok === false) throw new Error(json?.error || 'save failed');
+        set({ keywordsDirty: false, savingKeywords: false });
+      } catch (e) {
+        console.error(e);
+        set({ savingKeywords: false });
+      }
+    },
+
+    fetchConvergences: async () => {
+      const { sliderValues, userKeywords, selectedTags, boostEnabled, tuningPreset } = get();
+      set({ isLoading: true });
+      try {
+        const res = await fetch('/api/sweet-spot/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            weights: sliderValues,
+            keywords: userKeywords,
+            boostTags: boostEnabled ? selectedTags : [],
+            preset: tuningPreset,
+          }),
+        });
+        const data = await res.json();
+        set({
+          convergences: (data?.convergences ?? []) as Convergence[],
+          sweetSpotScore: Number(data?.score ?? 0),
+          resultMeta: (data?.meta ?? null) as ResultMeta,
+          isLoading: false,
+        });
+      } catch (e) {
+        console.error(e);
+        set({ isLoading: false });
+      }
+    },
+
+    // Réinitialise sliders, boost, filtres et mode puis relance la détection
+    resetAllPrefs: () => {
+      const sliders = defaultSliders();
+      const boostEnabled = true;
+      const activeDims: DimKey[] = [];
+      const filterMode: FilterMode = 'union';
+
+      // 1) Persistance (écrit puis supprime pour repartir propre)
+      savePrefs(sliders, boostEnabled, 'balanced');
+      saveFilters(activeDims, filterMode);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(LS_PREFS);
+          localStorage.removeItem(LS_KEY);
+          // Si vous souhaitez conserver les valeurs par défaut, commentez les deux lignes ci-dessus.
+        } catch {}
+      }
+
+      // 2) Mise à jour du store
+      set({
+        sliderValues: sliders,
+        boostEnabled,
+        activeDims,
+        filterMode,
+        autoAdjust: null,
+        autoAdjustedKey: null,
+        autoAdjustSeq: 0,
+        selectedTags: [],
+      });
+
+      // 3) Recalcule immédiat
+      get().fetchConvergences();
+    },
+  };
+});

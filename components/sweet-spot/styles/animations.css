@@ -1,0 +1,174 @@
+/* components/sweet-spot/styles/animations.css */
+
+/* ===== Variables (qualité visuelle & timings) ===== */
+:root {
+  --ikigai-blur: 0.4px;
+  --ikigai-opacity: 0.85;
+  --animation-duration: 0.3s;
+  --animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (max-width: 768px) {
+  :root {
+    --ikigai-blur: 0.2px;
+    --ikigai-opacity: 0.75;
+    --animation-duration: 0.2s;
+  }
+}
+
+/* ===== IKIGAI Canvas (qualité & containment) ===== */
+.ikigai-canvas {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: blur(var(--ikigai-blur));
+  opacity: var(--ikigai-opacity);
+  contain: layout style paint;
+}
+
+/* ===== Sections lourdes : visibility & intrinsic-size ===== */
+.convergences-grid,
+.card-heavy {
+  content-visibility: auto;
+  contain: layout style paint;
+  contain-intrinsic-size: 0 500px; /* fallback estimé pour éviter layout jumps */
+}
+
+/* ===== Cartes de convergence ===== */
+.convergence-card {
+  transition:
+    transform var(--animation-duration) var(--animation-easing),
+    opacity var(--animation-duration) var(--animation-easing),
+    box-shadow var(--animation-duration) var(--animation-easing);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+@media (hover: hover) and (pointer: fine) {
+  .convergence-card:hover {
+    transform: translate3d(0, -4px, 0);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    will-change: transform, box-shadow; /* activé seulement au hover desktop */
+  }
+}
+
+/* ===== Slider Thumb (GPU + focus) ===== */
+.slider-custom::-webkit-slider-thumb,
+.slider-custom::-moz-range-thumb {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition:
+    transform var(--animation-duration) var(--animation-easing),
+    box-shadow var(--animation-duration) var(--animation-easing);
+}
+.slider-custom:active::-webkit-slider-thumb,
+.slider-custom:active::-moz-range-thumb {
+  will-change: transform;
+}
+.slider-custom:focus-visible {
+  outline: 2px solid rgba(124, 58, 237, 0.8);
+  outline-offset: 2px;
+}
+
+/* ===== Animations d'entrée légères ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate-fadeInUp {
+  animation: fadeInUp 0.4s var(--animation-easing) both;
+}
+/* Stagger simple (progressif) */
+.convergence-card:nth-child(1) {
+  animation-delay: 0ms;
+}
+.convergence-card:nth-child(2) {
+  animation-delay: 50ms;
+}
+.convergence-card:nth-child(3) {
+  animation-delay: 100ms;
+}
+.convergence-card:nth-child(4) {
+  animation-delay: 150ms;
+}
+.convergence-card:nth-child(5) {
+  animation-delay: 200ms;
+}
+.convergence-card:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+/* ===== Mobile tweaks ===== */
+@media (max-width: 768px) {
+  .convergence-card {
+    transition: opacity var(--animation-duration) var(--animation-easing);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* ombre plus légère */
+  }
+  /* reset agressif des will-change pour éviter surcoûts mémoire */
+  * {
+    will-change: auto !important;
+  }
+}
+
+/* ===== Motion reduce (a11y) ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .animate-fadeInUp {
+    animation: none !important;
+  }
+  :root {
+    --animation-duration: 0.01ms;
+  }
+}
+
+/* ===== HiDPI (légère réduction de blur sur Retina) ===== */
+@media (min-resolution: 2dppx) {
+  .ikigai-canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  :root {
+    --ikigai-blur: 0.3px;
+  }
+}
+
+/* ===== Utilitaires ===== */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* ===== Scrollbar WebKit fine ===== */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

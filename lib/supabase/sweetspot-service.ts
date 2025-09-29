@@ -1,6 +1,6 @@
 // lib/supabase/sweetspot-service.ts
 // Avoid eager supabase import at module load to prevent test env failures
-const getClient = async () => (await import('@/lib/supabase/client')).supabase;
+const getClient = async () => (await import('@/lib/supabase/client')).supabaseBrowser();
 import { assertHasChoices, toSubmitChoices } from '@/lib/utils/assertHasChoices';
 import type { Profile4D, SJTChoice } from '@/lib/sweetspot/types';
 

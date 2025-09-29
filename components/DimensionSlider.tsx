@@ -9,6 +9,7 @@ type DimensionSliderProps = {
   min?: number;
   max?: number;
   pulse?: boolean;
+  bulletColorClass?: string; // tailwind bg-* class for the bullet
 };
 
 const DimensionSlider = ({
@@ -18,6 +19,7 @@ const DimensionSlider = ({
   min = 0,
   max = 1,
   pulse = false,
+  bulletColorClass,
 }: DimensionSliderProps) => {
   const gapPercent = Math.round(GAP * 100);
   const minPercent = Math.round(min * 100);
@@ -28,6 +30,11 @@ const DimensionSlider = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <label className="mb-1 block cursor-help font-medium">
+            {bulletColorClass && (
+              <span
+                className={`mr-2 inline-block h-2 w-2 rounded-full align-middle ${bulletColorClass}`}
+              />
+            )}
             {label}: {Math.round(value * 100)}%
           </label>
         </TooltipTrigger>

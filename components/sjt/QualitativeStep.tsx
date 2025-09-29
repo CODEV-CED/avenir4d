@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { H2 } from '@/components/UI/Typography';
 import type { QualInputs } from '@/lib/sweetspot/types';
 
 type Props = {
@@ -63,7 +64,7 @@ export function QualitativeStep({ answers, onChange, onPrevious, onFinish, isSub
     <div className="rounded-2xl border border-white/10 bg-[var(--ny-panel,#151520)] p-5 text-[var(--ny-text,#e8e8f0)] md:p-7">
       {/* Bandeau titre */}
       <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
-        <h2 className="text-xl font-semibold text-white md:text-2xl">Quelques mots sur toi</h2>
+        <H2 className="text-xl font-semibold text-white md:text-2xl">Quelques mots sur toi</H2>
         <p className="mt-1 text-sm text-white/70">
           Dis-le avec tes mots. Pas de “bonne” réponse — on cherche des éléments concrets qui te
           ressemblent.

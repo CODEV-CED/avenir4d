@@ -91,3 +91,22 @@ export const DEFAULT_CONSTRAINTS: BusinessConstraints = {
   maxEcart: 0.4,
   minConfidenceAvg: 3.0,
 };
+
+// ---- Sweet Spot Engine: shared result types ----
+export type ResultMeta = {
+  counts: { passions: number; talents: number; utilite: number; viabilite: number };
+  overlaps: { x2: number; x3: number; x4: number };
+  balanceFactor: number; // 0..1
+  viabilityFactor: number; // 0..1
+  baseline: number; // 0..1
+  usedBaseline: boolean;
+};
+
+export type Convergence = {
+  keyword: string;
+  strength: number; // 0..1
+  dims: Array<'passions' | 'talents' | 'utilite' | 'viabilite'>; // calcul interne
+  matchedDimensions: Array<'passions' | 'talents' | 'utilite' | 'viabilite'>; // exposé au front
+  boosted?: boolean;
+  boostedBy?: string[];
+};

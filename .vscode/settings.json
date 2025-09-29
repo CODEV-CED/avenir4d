@@ -14,5 +14,13 @@
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.tailwindConfig": "tailwind.config.ts",
   "css.lint.unknownAtRules": "ignore",
-  "postcss.validate": true
+  "postcss.validate": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.hg/store/**": true,
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/.vscode/**": true
+  }
 }

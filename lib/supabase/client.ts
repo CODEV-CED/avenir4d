@@ -1,7 +1,11 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/lib/supabase/types';
 
-export const supabase = createClientComponentClient<Database>();
+export const supabaseBrowser = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 
 export type SweetSpotProfileRow = Database['public']['Tables']['sweetspot_profiles']['Row'];
 export type SweetSpotProfileInsert = Database['public']['Tables']['sweetspot_profiles']['Insert'];

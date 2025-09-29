@@ -115,8 +115,8 @@ export default function HeroVisual({ score = 0, className = '' }: Props) {
         style={{
           width: '48px',
           height: '48px',
-          left: center ? `${center.x - 22}px` : '50%',
-          top: center ? `${center.y - 30}px` : '50%',
+          left: center ? `${center.x}px` : '50%',
+          top: center ? `${center.y}px` : '50%',
           transform: 'translate(-50%, -50%)',
           boxShadow: '0 0 40px rgba(255,255,255,0.9)',
         }}

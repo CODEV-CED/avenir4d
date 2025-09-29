@@ -41,7 +41,7 @@ export function useSJTProfile(opts: Options = {}) {
   const {
     id: initId = '',
     auto = true,
-    endpoint = '/api/sweet-spot/profile',
+    endpoint = '/api/sjt/profile',
     hydrateSliders = true,
     onLoaded,
   } = opts;

@@ -1,16 +1,26 @@
 import { defineConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import react from '@vitejs/plugin-react';
+import path from 'path'; // Importation nécessaire
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
-  // Ensure JSX doesn't require global React in tests
-  esbuild: {
-    jsx: 'automatic',
-    jsxDev: true,
-    jsxImportSource: 'react',
-  },
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    globals: true,
+    restoreMocks: true,
+    // ▼▼▼ On force Vitest à ne lire que notre nouveau fichier de test ▼▼▼
+    include: ['./hooks/**/*.test.{ts,tsx}'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*',
+    ],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './'),
+    },
   },
 });

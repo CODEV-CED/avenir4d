@@ -1,6 +1,7 @@
 // components/IkigaiControls.tsx
-'use client';
+`use client`;
 import { useEffect, useState } from 'react';
+import { H2 } from '@/components/UI/Typography';
 import type { Profile4D } from '@/types/sjt';
 import { loadProfile, clearProfile } from '@/lib/storage';
 
@@ -110,7 +111,7 @@ export default function IkigaiControls({ value, onChange, showResetLink = false 
   // 7) UI normale
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <h2 className="mb-3 text-base font-semibold">Réglages Ikigaï</h2>
+      <H2 className="mb-3 text-base font-semibold">Réglages Ikigaï</H2>
 
       <Row
         label="Plaisir"

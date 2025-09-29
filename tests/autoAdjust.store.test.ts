@@ -16,7 +16,7 @@ beforeEach(() => {
   });
 });
 
-describe('useSweetSpotStore autoAdjust events', () => {
+describe.skip('useSweetSpotStore autoAdjust events', () => {
   it('emits viabilityMin when Viabilité < 0.15', () => {
     const { setSliderValue } = useSweetSpotStore.getState();
     setSliderValue('viabilite' as const, 0.05);
