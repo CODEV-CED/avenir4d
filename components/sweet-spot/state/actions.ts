@@ -1,6 +1,6 @@
-// components/sweet-spot/state/actions.ts
+﻿// components/sweet-spot/state/actions.ts
 
-import type { DimKey, SliderValues, TabKey, FilterMode } from '@sweet-spot/types';
+import type { DimKey, SliderValues, TabKey, FilterMode, UserKeywords } from '@sweet-spot/types';
 
 // UI Action Creators
 export const uiActions = {
@@ -61,6 +61,11 @@ export const sweetSpotActions = {
     payload: { dim, keyword },
   }),
 
+  setKeywords: (keywords: UserKeywords) => ({
+    type: 'SET_KEYWORDS' as const,
+    payload: keywords,
+  }),
+
   addTag: (tag: string) => ({
     type: 'ADD_TAG' as const,
     payload: tag,
@@ -90,3 +95,6 @@ export const sweetSpotActions = {
     type: 'RESET_ALL' as const,
   }),
 };
+
+
+

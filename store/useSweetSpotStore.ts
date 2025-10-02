@@ -9,6 +9,9 @@ import {
 } from './sliderConstraints';
 import type { TuningPreset } from '@/lib/sweetSpotEngine';
 import type { ResultMeta, Convergence } from '@/lib/sweetspot/types';
+import type { HybridProject } from '@/types/hybrid-project.schema';
+import type { EmergingCareerBatch3 as EmergingCareerLycee } from '@/data/emerging-careers-batch3';
+import { hybridProjectGenerator } from '@/services';
 
 // Re-export types if needed elsewhere
 export type { SliderKey, SliderValues };
@@ -133,6 +136,17 @@ export type SweetSpotStore = {
   // ✅ nouveau
   boostEnabled: boolean;
   setBoostEnabled: (v: boolean) => void;
+
+  // ====== B3: hybrid projects ======
+  generatedProjects: HybridProject[];
+  selectedProject: HybridProject | null;
+  isGeneratingProjects: boolean;
+  projectGenerationError: string | null;
+
+  generateProjects: (seedCareers: EmergingCareerLycee[]) => Promise<void>;
+  selectProject: (project: HybridProject) => void;
+  saveProjectToProfile: (project: HybridProject) => Promise<void>;
+  clearProjects: () => void;
 
   // Tuning preset for engine
   tuningPreset: TuningPreset;
@@ -289,6 +303,76 @@ export const useSweetSpotStore = create<SweetSpotStore>((set, get) => {
     setBoostEnabled: (v) => {
       set({ boostEnabled: v });
       savePrefs(get().sliderValues, v, get().tuningPreset);
+    },
+
+    // ====== B3: hybrid projects ======
+    generatedProjects: [],
+    selectedProject: null,
+    isGeneratingProjects: false,
+    projectGenerationError: null,
+
+    clearProjects: () => set({ generatedProjects: [], selectedProject: null, projectGenerationError: null }),
+
+    selectProject: (project) => set({ selectedProject: project }),
+
+    saveProjectToProfile: async (project) => {
+      console.log('[Store] save project:', project.title);
+      try {
+        await fetch('/api/sweet-spot/projects/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project }),
+        });
+      } catch (error) {
+        console.error('saveProjectToProfile failed', error);
+      }
+    },
+
+    generateProjects: async (seedCareers) => {
+      const { userKeywords, convergences } = get();
+      set({ isGeneratingProjects: true, projectGenerationError: null });
+
+      const simplifiedConvergences = (convergences ?? [])
+        .filter((item) => typeof item?.keyword === 'string' && item.keyword.trim().length > 0)
+        .slice(0, 3)
+        .map((item) => ({
+          keywords: [item.keyword.trim()],
+          strength:
+            typeof item.strength === 'number'
+              ? item.strength
+              : typeof (item as any)?.score === 'number'
+                ? (item as any).score
+                : 0.6,
+        }));
+
+      try {
+        const result = await hybridProjectGenerator.generate(
+          userKeywords || {},
+          simplifiedConvergences,
+          seedCareers,
+        );
+
+        if (!result.projects.length) {
+          throw new Error('no projects generated');
+        }
+
+        set({
+          generatedProjects: result.projects,
+          selectedProject: result.projects[0] ?? null,
+          isGeneratingProjects: false,
+          projectGenerationError: null,
+        });
+
+        console.log(`[Store] generation ${result.source}${result.cached ? ' (cache)' : ''}: ${result.projects.length} projects (key ${result.cacheKey})`);
+      } catch (error) {
+        console.error('[Store] project generation failed', error);
+        set({
+          generatedProjects: [],
+          selectedProject: null,
+          isGeneratingProjects: false,
+          projectGenerationError: 'Impossible de generer des projets pour ce metier. Reessaie ou choisis-en un autre.',
+        });
+      }
     },
 
     tuningPreset: basePrefs.preset,

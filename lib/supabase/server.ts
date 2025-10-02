@@ -19,6 +19,8 @@ export async function getSupabaseServerClient() {
           store.set({ name, value: '', ...options, maxAge: 0 });
         },
       },
-    }
+    },
   );
 }
+// Alias pour compatibilité avec le code existant
+export const createClient = getSupabaseServerClient;

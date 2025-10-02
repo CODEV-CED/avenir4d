@@ -1,62 +1,24 @@
 // components/sweet-spot/workers/sweetspot.worker.ts
-// --------------------------------------------------
-// Worker ESM (Next 14+/15) — typé WebWorker
+// Worker ESM (Next 13+/14+/15), aucun webpack custom requis
 
-export {}; // pour isoler le scope du module
+import type {
+  ComputePayload,
+  Convergence,
+  InMsg,
+  OutMsg,
+  SliderValues,
+  UserKeywords,
+  WorkerResult,
+  DimKey,
+} from '../types';
 
-// ✅ Types partagés (copiez/importe z si vous avez déjà ces types ailleurs)
-type DimKey = 'passions' | 'talents' | 'utilite' | 'viabilite';
-type SliderValues = Record<DimKey, number>;
-type UserKeywords = Record<DimKey, string[]>;
-
-type Convergence = {
-  id: string;
-  formula: string[];
-  result: string;
-  description: string;
-  example: string;
-  score: number;
-  confidence: number;
-  viability: 'high' | 'medium' | 'low';
-};
-
-type WorkerResult = {
-  sweetSpotScore: number;
-  isEureka: boolean;
-  analysis: {
-    strongestDimension: DimKey;
-    weakestDimension: DimKey;
-    balance: number;
-    maturity: number;
-    coherence: number;
-  };
-  insights: {
-    nextSteps: string[];
-    recommendations: string[];
-    warnings?: string[];
-  };
-  convergences: Convergence[];
-};
-
-// ✅ Payload attendu par PRECOMPUTE
-type ComputePayload = {
-  sliders: SliderValues;
-  keywords: UserKeywords;
-  tags: string[];
-  mode: 'union' | 'intersection';
-};
-
-// ✅ Messages in/out
-type InMsg = { type: 'PING' } | { type: 'PRECOMPUTE'; payload: ComputePayload };
-
-type OutMsg = { type: 'PONG' } | { type: 'PRECOMPUTE_RESULT'; payload: WorkerResult };
-
-// ✅ Scope dédié du worker (lib "webworker" activée dans tsconfig)
+// ⚠️ avec "lib": ["WebWorker", ...] dans tsconfig, DedicatedWorkerGlobalScope est connu
 declare const self: DedicatedWorkerGlobalScope;
 const ctx: DedicatedWorkerGlobalScope = self;
 
 // --------------------------------------------------
-// Implémentations (stub : branchez vos vraies fonctions)
+// Implémentations (stubs → branche tes vraies fonctions si besoin)
+
 function calculateSweetSpotScore(
   sliders: SliderValues,
   keywords: UserKeywords,
@@ -82,7 +44,6 @@ function detectConvergences(
   sliders: SliderValues,
   tags: string[],
 ): Convergence[] {
-  // Exemple minimal ; remplacez par votre logique enrichie
   const dims = Object.entries(keywords) as [DimKey, string[]][];
   const out: Convergence[] = [];
   for (let i = 0; i < dims.length; i++) {
@@ -131,7 +92,7 @@ function insightsFrom(result: WorkerResult): WorkerResult['insights'] {
 
 // --------------------------------------------------
 // Traitement
-let computeTimeout: number | null = null;
+let computeTimeout: ReturnType<typeof setTimeout> | undefined;
 
 function processCompute(payload: ComputePayload) {
   const { sliders, keywords, tags, mode } = payload;
@@ -150,7 +111,7 @@ function processCompute(payload: ComputePayload) {
       analysis,
       insights: { nextSteps: [], recommendations: [] },
       convergences,
-    }),
+    } as WorkerResult),
     convergences,
   };
 
@@ -158,7 +119,7 @@ function processCompute(payload: ComputePayload) {
 }
 
 // --------------------------------------------------
-// Message handler — correctement typé
+// Handler
 ctx.onmessage = (evt: MessageEvent<InMsg>) => {
   const msg = evt.data;
 
@@ -170,8 +131,8 @@ ctx.onmessage = (evt: MessageEvent<InMsg>) => {
   if (msg?.type === 'PRECOMPUTE') {
     if (computeTimeout) clearTimeout(computeTimeout);
     computeTimeout = setTimeout(() => {
-      processCompute(msg.payload); // ✅ payload est typé ComputePayload
-      computeTimeout = null;
-    }, 100) as unknown as number; // id numérique en worker
+      processCompute(msg.payload);
+      computeTimeout = undefined;
+    }, 100);
   }
 };

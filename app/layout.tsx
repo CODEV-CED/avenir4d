@@ -1,5 +1,8 @@
+// app/layout.tsx
 import './globals.css';
+import '../styles/print.css';
 import Providers from './providers';
+import { PaywallModal } from '@/components/paywall/PaywallModal';
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import Script from 'next/script';
@@ -23,21 +26,24 @@ export const viewport: Viewport = {
   themeColor: [{ media: '(prefers-color-scheme: dark)', color: '#000000' }],
 };
 
-// On ajoute 'async' ici
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Récupère le nonce posé par le middleware de manière sûre pour l'hydratation
-  const headersList = await headers(); // Et on utilise 'await' ici
+  // Récupère le nonce pour CSP
+  const headersList = await headers();
   const nonce = headersList.get('x-csp-nonce') || undefined;
 
   return (
     <html lang="fr">
       <body>
-        {/* Boot inline avec nonce → nécessaire pour CSP 'strict-dynamic' */}
-        <Script id="boot" nonce={nonce} strategy="beforeInteractive">{`
-          window.__BOOT__ = true;
-        `}</Script>
+        {/* Boot inline avec nonce */}
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: 'window.__BOOT__ = true;',
+          }}
+        />
 
-        {/* Optionnel : Segment uniquement si activé via .env */}
+        {/* Segment analytics (optionnel) */}
         {process.env.NEXT_PUBLIC_ENABLE_SEGMENT === 'true' && (
           <Script
             id="segment"
@@ -47,7 +53,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
         )}
 
+        {/* Providers wrapper (Supabase, etc.) */}
         <Providers>{children}</Providers>
+
+        {/* ✅ MODAL PAYWALL GLOBALE - en dehors du Providers */}
+        <PaywallModal />
       </body>
     </html>
   );

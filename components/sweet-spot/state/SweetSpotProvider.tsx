@@ -1,4 +1,4 @@
-// components/sweet-spot/state/SweetSpotProvider.tsx
+﻿// components/sweet-spot/state/SweetSpotProvider.tsx
 
 import React, { createContext, useReducer, ReactNode, useMemo } from 'react';
 import { sweetSpotReducer } from './sweetSpotReducer';
@@ -10,6 +10,8 @@ import type {
   DimKey,
   TabKey,
   FilterMode,
+  SliderValues,
+  UserKeywords,
 } from '@sweet-spot/types';
 import { initialSweetSpotState, initialUIContextState } from '@sweet-spot/types';
 
@@ -19,8 +21,10 @@ interface SweetSpotContextType {
   actions: {
     // SweetSpot actions
     setSliderValue: (dim: DimKey, value: number) => void;
+    setSliderValues: (values: SliderValues) => void;
     addKeyword: (dim: DimKey, keyword: string) => void;
     removeKeyword: (dim: DimKey, keyword: string) => void;
+    setKeywords: (keywords: UserKeywords) => void;
     addTag: (tag: string) => void;
     removeTag: (tag: string) => void;
     setFilterMode: (mode: FilterMode) => void;
@@ -69,11 +73,17 @@ export const SweetSpotProvider: React.FC<SweetSpotProviderProps> = ({
       setSliderValue: (dim: DimKey, value: number) => {
         dispatch(sweetSpotActions.setSliderValue(dim, value));
       },
+      setSliderValues: (values: SliderValues) => {
+        dispatch(sweetSpotActions.setSliderValues(values));
+      },
       addKeyword: (dim: DimKey, keyword: string) => {
         dispatch(sweetSpotActions.addKeyword(dim, keyword));
       },
       removeKeyword: (dim: DimKey, keyword: string) => {
         dispatch(sweetSpotActions.removeKeyword(dim, keyword));
+      },
+      setKeywords: (keywords: UserKeywords) => {
+        dispatch(sweetSpotActions.setKeywords(keywords));
       },
       addTag: (tag: string) => {
         dispatch(sweetSpotActions.addTag(tag));
@@ -135,6 +145,10 @@ export const SweetSpotProvider: React.FC<SweetSpotProviderProps> = ({
 
   return <SweetSpotContext.Provider value={value}>{children}</SweetSpotContext.Provider>;
 };
+
+
+
+
 
 
 

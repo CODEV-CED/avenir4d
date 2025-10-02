@@ -3,6 +3,9 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { useSweetSpot } from '@sweet-spot/hooks';
+import { useAccessStore } from '@/store/useAccessStore';
+import { useSweetSpotStore } from '@/store/useSweetSpotStore';
+import { EMERGING_CAREERS_BATCH3 } from '@/data/emerging-careers-batch3';
 // import { UI_CLASSES } from '@sweet-spot/constants'; // <- pas utilisé, tu peux supprimer
 import { useSweetSpotWorker } from '@sweet-spot/hooks/useSweetSpotWorker';
 import {
@@ -105,6 +108,32 @@ export default function ConvergencesSection() {
     },
   );
 
+  // Handler pour bouton "Explorer cette piste"
+  const handleExploreProject = useCallback((seedId: string) => {
+    const isPremium = true;
+    const { openPaywall } = useAccessStore.getState();
+    if (!isPremium) {
+      // Stocker intention + ouvrir paywall
+      try {
+        localStorage.setItem('a4d.pendingSeed', seedId);
+      } catch {}
+      openPaywall(undefined, 'convergence_card');
+      return;
+    }
+
+    // Utilisateur premium : générer immédiatement
+    const seed = EMERGING_CAREERS_BATCH3.find((c) => c.id === seedId) || EMERGING_CAREERS_BATCH3[0];
+    const { generateProjects } = useSweetSpotStore.getState();
+
+    generateProjects([seed]).then(() => {
+      setTimeout(() => {
+        document
+          .getElementById('hybrid-projects-section')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    });
+  }, []);
+
   // Items à afficher (priorise résultat serveur, fallback worker, puis samples)
   const items = useMemo(() => {
     if (isLoading) return wData?.convergences || LOADING_CARDS;
@@ -183,51 +212,38 @@ export default function ConvergencesSection() {
 
       {/* Grid convergences */}
       <div className="convergences-grid grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((conv, i) => (
-          <div
-            key={conv.id}
-            className={`convergence-card animate-fadeInUp rounded-xl border border-white/10 bg-black/80 p-5 ${
-              isLoading ? 'animate-pulse' : ''
-            }`}
-            style={{ animationDelay: `${i * 60}ms` }} // petit stagger plus léger
-          >
-            <div className="mb-2 text-xs text-white/50">
-              {Array.isArray(conv.formula) ? conv.formula.join(' + ') : '…'}
-            </div>
-            <div className="mb-1 text-lg font-semibold">{conv.result}</div>
-            <div className="mb-2 text-sm text-white/80">{conv.description}</div>
-            <div className="text-xs text-white/50">Exemple : {conv.example}</div>
-          </div>
-        ))}
-      </div>
+        {items.map((conv, i) => {
+          // Associer chaque convergence à un métier seed (cyclique)
+          const seedId =
+            EMERGING_CAREERS_BATCH3[i % EMERGING_CAREERS_BATCH3.length]?.id ||
+            EMERGING_CAREERS_BATCH3[0]?.id;
 
-      {/* Actions */}
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button
-          onClick={prefetchProjects}
-          className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm hover:bg-white/20 disabled:opacity-40"
-          disabled={isLoading || convergences.length === 0}
-        >
-          Préparer les projets
-        </button>
-        <button
-          onClick={() => refetch()}
-          className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm hover:bg-white/20 disabled:opacity-40"
-          disabled={isLoading}
-        >
-          <RotateCcw className="h-4 w-4" />
-          Régénérer
-        </button>
-        <button
-          onClick={exportData}
-          className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
-          title="Exporter l'état + les convergences en JSON"
-        >
-          Exporter JSON
-        </button>
-        {isFetching && !isLoading && (
-          <span className="text-xs text-white/40">Mise à jour en cours…</span>
-        )}
+          return (
+            <div
+              key={conv.id}
+              className={`convergence-card animate-fadeInUp rounded-xl border border-white/10 bg-black/80 p-5 transition-all hover:border-white/20 hover:shadow-lg ${
+                isLoading ? 'animate-pulse' : ''
+              }`}
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="mb-2 text-xs text-white/50">
+                {Array.isArray(conv.formula) ? conv.formula.join(' + ') : '…'}
+              </div>
+              <div className="mb-1 text-lg font-semibold">{conv.result}</div>
+              <div className="mb-2 text-sm text-white/80">{conv.description}</div>
+              <div className="mb-4 text-xs text-white/50">Exemple : {conv.example}</div>
+
+              {/* Bouton Explorer cette piste */}
+              <button
+                onClick={() => handleExploreProject(seedId)}
+                disabled={isLoading}
+                className="mt-auto w-full rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-200 transition-all hover:-translate-y-0.5 hover:bg-purple-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Explorer cette piste →
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Analyse (optionnel) */}

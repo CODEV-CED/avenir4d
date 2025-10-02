@@ -3,8 +3,10 @@
 'use client';
 
 import React, { useEffect, useRef, useCallback, useState, Suspense, lazy } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { ChevronRight, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Card } from './ui/shared/Card';
 
@@ -28,6 +30,11 @@ import { UI_CLASSES, SWEETSPOT_CONFIG } from './constants';
 import type { PersistedData } from './types';
 
 import { useSweetSpotWorker } from '@sweet-spot/hooks/useSweetSpotWorker';
+import { usePostPaymentAutoplay } from '@/hooks/usePostPaymentAutoplay';
+import { useAccessStore } from '@/store/useAccessStore';
+import ProjectPreview from '@/components/projects/ProjectPreview';
+import { EMERGING_CAREERS_BATCH3 } from '@/data/emerging-careers-batch3';
+import { useSweetSpotStore } from '@/store/useSweetSpotStore';
 
 // Lazy loading pour les sections lourdes
 
@@ -37,8 +44,129 @@ const ConvergencesSection = lazy(() => import('./ui/sections/ConvergencesSection
 
 // Export du composant SANS les wrappers (ils sont dans index.tsx)
 
+const clamp01 = (value: unknown, fallback = 0.5) => {
+  const numeric =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number.parseFloat(value)
+        : Number.NaN;
+  if (Number.isFinite(numeric)) {
+    return Math.min(1, Math.max(0, numeric));
+  }
+  return Math.min(1, Math.max(0, fallback));
+};
+
+const sanitizeKeywords = (input: unknown): string[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const item of input) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim().replace(/\s+/g, ' ');
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized.slice(0, 60));
+    if (result.length >= 12) break;
+  }
+  return result;
+};
+
 const SweetSpotLabTeen = () => {
   const { state, uiState, actions } = useSweetSpot();
+  const { setSliderValues, setKeywords, setLoading, setError, resetAll } = actions;
+
+  const searchParams = useSearchParams();
+  const profileParam = (searchParams?.get('profile') ?? '').trim();
+  const loadedProfileIdRef = useRef<string | null>(null);
+
+  usePostPaymentAutoplay();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const storedId = window.localStorage.getItem('sjtProfileId') ?? '';
+    const targetId = profileParam || storedId;
+
+    if (!targetId) {
+      loadedProfileIdRef.current = null;
+      return;
+    }
+
+    if (loadedProfileIdRef.current === targetId) {
+      return;
+    }
+
+    loadedProfileIdRef.current = targetId;
+
+    if (profileParam) {
+      try {
+        window.localStorage.setItem('sjtProfileId', profileParam);
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[SweetSpotLabTeen] impossible de stocker sjtProfileId', error);
+        }
+      }
+    }
+
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const loadProfile = async () => {
+      resetAll();
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/sjt/profile?id=${encodeURIComponent(targetId)}`, {
+          cache: 'no-store',
+          signal,
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json?.ok === false) {
+          throw new Error(json?.error || `Erreur ${res.status}`);
+        }
+        if (signal.aborted) return;
+
+        const profile = json.profile ?? {};
+        const profile4d = profile.profile4d ?? {};
+
+        setSliderValues({
+          passions: clamp01(profile4d.plaisir),
+          talents: clamp01(profile4d.competence),
+          utilite: clamp01(profile4d.utilite),
+          viabilite: Math.max(0.15, clamp01(profile4d.viabilite)),
+        });
+
+        const keywordsSource = profile.keywords ?? {};
+
+        setKeywords({
+          passions: sanitizeKeywords(keywordsSource.passions),
+          talents: sanitizeKeywords(keywordsSource.talents),
+          utilite: sanitizeKeywords(keywordsSource.utilite),
+          viabilite: sanitizeKeywords(keywordsSource.viabilite),
+        });
+      } catch (error) {
+        if (signal.aborted) return;
+        const message =
+          error instanceof Error ? error.message : 'Erreur lors du chargement du profil';
+        setError(message);
+        toast.error('Chargement du profil échoué', { description: message });
+        loadedProfileIdRef.current = null;
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      controller.abort();
+    };
+  }, [profileParam, resetAll, setError, setKeywords, setLoading, setSliderValues]);
   const keyboardHeight = useKeyboardHeight();
 
   // Badge "Eureka local?? (pré-calcul Worker)
@@ -220,7 +348,6 @@ const SweetSpotLabTeen = () => {
 
       <div className="relative z-10 mx-auto max-w-6xl">
         {/* Header */}
-
         <header className="relative mb-10 pt-12 text-center">
           <ProgressIndicator
             completedSteps={persistedData.completedSteps}
@@ -249,17 +376,13 @@ const SweetSpotLabTeen = () => {
             tu veux avoir et ce qui peut marcher pour toi.
           </p>
         </header>
-
         {/* Quick steps */}
-
         <QuickSteps
           completedSteps={persistedData.completedSteps}
           isMobile={uiState.isMobile}
           onStepClick={scrollToCard}
         />
-
         {/* Cards */}
-
         <div className="space-y-6">
           {/* Card 1: Sliders */}
 
@@ -306,36 +429,23 @@ const SweetSpotLabTeen = () => {
           </Card>
 
           {/* Card 5: Convergences */}
-
           <Card number={5} title="Tes pistes prometteuses">
             <Suspense fallback={<ConvergencesLoader />}>
               <ConvergencesSection />
             </Suspense>
           </Card>
-        </div>
 
-        {/* Action buttons */}
-
-        <div
-          className={`mt-10 flex justify-center pb-10 ${
-            uiState.isMobile ? 'flex-col gap-3 px-4' : 'gap-5'
-          }`}
-        >
-          <button className={`${UI_CLASSES.BTN_PRIMARY} ${uiState.isMobile ? 'w-full' : ''}`}>
-            Voir mes pistes
-          </button>
-
-          <button
-            className={`${UI_CLASSES.BTN_SECONDARY} ${
-              uiState.isMobile ? 'w-full justify-center' : ''
-            } flex items-center gap-2`}
-          >
-            Explorer plus loin <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-
+          {/* Card 6: Projets Preview - NOUVEAU */}
+          <ProjectPreview
+            title="Tes Projets Pros"
+            max={3}
+            onPrimaryCta={() => {
+              window.location.href = '/formations';
+            }}
+          />
+        </div>{' '}
+        {/* Fin du space-y-6 */}
         {/* Reset button */}
-
         <button
           onClick={handleReset}
           className={`fixed bottom-8 flex items-center gap-2 rounded-full border border-white/20 bg-black/70 px-6 py-3 text-white/90 transition-all hover:-translate-y-0.5 hover:bg-black/80 ${
@@ -346,9 +456,7 @@ const SweetSpotLabTeen = () => {
 
           {uiState.isMobile ? 'Reset' : 'Repartir de zéro'}
         </button>
-
         {/* Onboarding modal */}
-
         <div style={{ height: keyboardHeight ? keyboardHeight * 0.4 : 0 }} aria-hidden />
         <OnboardingModal
           isOpen={uiState.showOnboarding}

@@ -1,6 +1,14 @@
 // components/sweet-spot/hooks/useSweetSpotWorker.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { SliderValues, UserKeywords, WorkerResult } from '../utils/sweetspot-calculations';
+import type {
+  ComputePayload,
+  InMsg,
+  OutMsg,
+  DimKey,
+  SliderValues,
+  UserKeywords,
+  WorkerResult,
+} from '../types';
 import { calculateSweetSpotSync } from '../utils/sweetspot-calculations';
 
 export function useSweetSpotWorker(
@@ -19,15 +27,14 @@ export function useSweetSpotWorker(
   const lastMessageTime = useRef(0);
   const MIN_MESSAGE_INTERVAL = 100;
 
-  // NB: chemin depuis /components/sweet-spot/hooks vers /components/sweet-spot/workers
   const workerUrl = useMemo(
-    () => (supported ? new URL('../workers/sweetspot.worker.ts', import.meta.url) : null),
-    [supported],
+    () => (typeof window !== 'undefined' ? '/workers/sweetspot.worker.js' : null),
+    [],
   );
 
   // Instanciation / teardown du worker (si support + enabled)
   useEffect(() => {
-    if (!supported || !enabled || !workerUrl) return;
+    if (!workerUrl) return;
 
     if (!workerRef.current) {
       workerRef.current = new Worker(workerUrl, { type: 'module' });
@@ -53,7 +60,7 @@ export function useSweetSpotWorker(
       workerRef.current = null;
       readyRef.current = false;
     };
-  }, [supported, enabled, workerUrl]);
+  }, [workerUrl]);
 
   // Fallback synchrone si pas de Worker (SSR / vieux navigateurs)
   useEffect(() => {

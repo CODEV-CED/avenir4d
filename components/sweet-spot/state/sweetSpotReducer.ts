@@ -1,6 +1,6 @@
-// components/sweet-spot/state/sweetSpotReducer.ts
+﻿// components/sweet-spot/state/sweetSpotReducer.ts
 
-import type { SweetSpotState, SliderValues, DimKey } from '@sweet-spot/types';
+import type { SweetSpotState, SliderValues, DimKey, UserKeywords } from '@sweet-spot/types';
 import { calculateSweetSpotScore } from '@sweet-spot/utils';
 import { initialSweetSpotState } from '@sweet-spot/types';
 
@@ -9,6 +9,7 @@ export type SweetSpotAction =
   | { type: 'SET_SLIDER_VALUES'; payload: SliderValues }
   | { type: 'ADD_KEYWORD'; payload: { dim: DimKey; keyword: string } }
   | { type: 'REMOVE_KEYWORD'; payload: { dim: DimKey; keyword: string } }
+  | { type: 'SET_KEYWORDS'; payload: UserKeywords }
   | { type: 'ADD_TAG'; payload: string }
   | { type: 'REMOVE_TAG'; payload: string }
   | { type: 'SET_FILTER_MODE'; payload: 'union' | 'intersection' }
@@ -60,6 +61,13 @@ export const sweetSpotReducer = (
             (k) => k !== action.payload.keyword,
           ),
         },
+      };
+    }
+
+    case 'SET_KEYWORDS': {
+      return {
+        ...state,
+        userKeywords: { ...action.payload },
       };
     }
 

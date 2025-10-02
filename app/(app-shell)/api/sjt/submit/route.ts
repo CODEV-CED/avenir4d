@@ -1,46 +1,81 @@
-﻿import { NextResponse } from "next/server";
-import { getServerSupabase } from "@/lib/supabase/server-next15";
-import { zSJTSubmit } from "@/lib/sweetspot/zSJTSubmit";
+﻿import type { ZodError } from 'zod';
+import { NextResponse } from 'next/server';
+import { zSJTSubmit } from '@/lib/sweetspot/zSJTSubmit';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+function buildValidationError(error: ZodError) {
+  const details: Record<string, string> = {};
+  for (const issue of error.issues) {
+    details[issue.path.join('.')] = issue.message;
+  }
+  return details;
+}
 
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-
-  const userResult = await supabase.auth.getUser();
-  const user = userResult.data?.user ?? null;
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Non authentifie" }, { status: 401 });
+  let rawBody: unknown;
+  try {
+    rawBody = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Payload JSON invalide' }, { status: 400 });
   }
 
-  const raw = (await req.json()) as Record<string, unknown>;
-  const payload = zSJTSubmit.parse(raw);
+  const parsed = zSJTSubmit.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: 'Validation echouee', details: buildValidationError(parsed.error) },
+      { status: 422 },
+    );
+  }
+
+  const payload = parsed.data;
 
   const insertData = {
-    user_id: user.id,
     profile4d: payload.profile4d as unknown,
-    keywords: payload.keywords ?? {},
+    keywords: payload.keywords ?? { passions: [], talents: [], utilite: [], viabilite: [] },
     qual: payload.qual as unknown,
     raw_choices: payload.choices as unknown,
-    survey_version: payload.surveyVersion ?? "sjt_v2",
-    idempotency_key: (raw?.idempotencyKey as string | undefined) ?? null,
-  };
+    survey_version: payload.surveyVersion ?? 'sjt_v2',
+    idempotency_key: payload.idempotencyKey ?? null,
+    user_agent: req.headers.get('user-agent'),
+    completion_time_ms: null,
+  } as Record<string, unknown>;
 
-  const upsertResult = await supabase
-    .from("sweetspot_profiles")
-    .upsert(insertData, { onConflict: "idempotency_key" })
-    .select("id, created_at")
+  const upsert = await supabaseAdmin
+    .from('sweetspot_profiles')
+    .upsert(insertData, { onConflict: 'idempotency_key' })
+    .select('id, created_at, idempotency_key')
     .single();
 
-  if (upsertResult.error) {
-    return NextResponse.json({ ok: false, error: upsertResult.error.message }, { status: 500 });
+  if (upsert.error) {
+    // Cas d'idempotence : on retrouve l'enregistrement existant et on le renvoie
+    if (upsert.error.code === '23505' && payload.idempotencyKey) {
+      const existing = await supabaseAdmin
+        .from('sweetspot_profiles')
+        .select('id, created_at, idempotency_key')
+        .eq('idempotency_key', payload.idempotencyKey)
+        .maybeSingle();
+
+      if (!existing.error && existing.data) {
+        return NextResponse.json(
+          { ok: true, id: existing.data.id, profile: { createdAt: existing.data.created_at } },
+          { status: 200, headers: { Location: `/api/sjt/profile?id=${existing.data.id}` } },
+        );
+      }
+    }
+
+    console.error('[sjt.submit] upsert error', upsert.error);
+    return NextResponse.json(
+      { ok: false, error: upsert.error.message || 'Erreur serveur' },
+      { status: 500 },
+    );
   }
 
-  const profileRow = upsertResult.data;
-
+  const profile = upsert.data;
   return NextResponse.json(
-    { ok: true, id: profileRow.id, profile: { createdAt: profileRow.created_at } },
-    { status: 201, headers: { Location: `/api/sjt/profile?id=${profileRow.id}` } },
+    { ok: true, id: profile.id, profile: { createdAt: profile.created_at } },
+    { status: 201, headers: { Location: `/api/sjt/profile?id=${profile.id}` } },
   );
 }
