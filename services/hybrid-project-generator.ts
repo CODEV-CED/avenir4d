@@ -249,7 +249,7 @@ export class HybridProjectGenerator {
     ).slice(0, 5);
     const attendusLycee = ensureArray(
       attendusKeys,
-      ['créativité', 'autonomie', 'rigueur'],
+      toAttenduKeys(['créativité', 'autonomie', 'rigueur']),
       2,
     ).slice(0, 6);
 
@@ -322,7 +322,7 @@ export class HybridProjectGenerator {
     ).slice(0, 5);
     const attendus = ensureArray(
       toAttenduKeys(attendusCandidates),
-      ['créativité', 'autonomie', 'rigueur'],
+      toAttenduKeys(['créativité', 'autonomie', 'rigueur']),
       2,
     ).slice(0, 6);
 
