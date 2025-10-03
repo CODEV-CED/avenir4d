@@ -1,30 +1,40 @@
 // app/api/access/verify/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server'; // garde ce chemin cohérent avec ta repo
 
 export async function GET() {
   const supabase = await createClient();
 
+  // 1) Auth
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ isPremium: false });
+  if (!user) {
+    // non connecté → on répond proprement sans "error"
+    return NextResponse.json({ isPremium: false }, { status: 200 });
   }
 
-  const { data, error } = await supabase
+  // 2) Lire le profil
+  const { data: profile, error: readErr } = await supabase
     .from('user_profiles')
-    .select('is_premium')
+    .select('is_premium, premium_since')
     .eq('id', user.id)
     .single();
 
-  if (error) {
-    // Soft-fail : ne pas casser l'UX si profil absent
-    console.error('[verify] Profile not found:', error);
-    return NextResponse.json({ isPremium: false, error: 'profile_not_found' });
+  // 3) Auto-création si manquant
+  // PostgREST "row not found" = code 'PGRST116' ; certains SDK renvoient simplement null sans error
+  if (readErr?.code === 'PGRST116' || (!profile && !readErr)) {
+    const { error: insertErr } = await supabase
+      .from('user_profiles')
+      .insert([{ id: user.id, is_premium: false }]);
+
+    // même si l’insert échoue (RLS etc.), on reste silencieux côté UI
+    return NextResponse.json({ isPremium: false }, { status: 200 });
   }
 
-  return NextResponse.json({ isPremium: !!data?.is_premium });
+  // 4) Profil trouvé
+  return NextResponse.json({
+    isPremium: !!profile?.is_premium,
+    premiumSince: profile?.premium_since ?? null,
+  });
 }

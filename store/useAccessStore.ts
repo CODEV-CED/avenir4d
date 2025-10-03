@@ -15,6 +15,7 @@ type AccessState = {
   pendingAction?: () => void;
 
   // Actions
+  hydrateFromDB: () => Promise<void>;
   setPremium: (v: boolean, price?: number) => void;
   openPaywall: (onSuccess?: () => void, context?: string) => void;
   closePaywall: () => void;
@@ -31,6 +32,21 @@ export const useAccessStore = create<AccessState>()(
       paywallViews: 0,
 
       // Actions
+      hydrateFromDB: async () => {
+        try {
+          const res = await fetch('/api/access/verify', { cache: 'no-store' });
+          const json = await res.json();
+
+          if (typeof json?.isPremium === 'boolean') {
+            set({ isPremium: json.isPremium });
+          } else {
+            set({ isPremium: false });
+          }
+        } catch {
+          set({ isPremium: false });
+        }
+      },
+
       setPremium: (v, price) => {
         set({
           isPremium: v,

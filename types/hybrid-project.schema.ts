@@ -1,20 +1,25 @@
 // B3 — types/hybrid-project.schema.ts
 import { z } from 'zod';
-import { FORMATION_LABELS, ATTENDU_LABELS } from '@/data/parcoursup-vocabulary';
+import { FORMATION_LABELS } from '@/data/parcoursup-vocabulary';
+import {
+  FORMATIONS as CONTROLLED_FORMATIONS,
+  ATTENDUS as CONTROLLED_ATTENDUS,
+} from '@/data/controlled-vocab';
 
 // ===============================
 // Énums alignées avec l'UI
 // ===============================
 const DifficultyUIEnum = z.enum(['facile', 'medium', 'ambitieux']);
 const DurationUIEnum = z.enum(['2 semaines', '3 semaines', '4 semaines', '1 mois']);
+// Build enums from controlled machine keys to ensure type consistency across the app
 const FormationEnum = z.union(
-  (Object.keys(FORMATION_LABELS) as string[]).map((k) => z.literal(k)) as [
+  (CONTROLLED_FORMATIONS as readonly string[]).map((k) => z.literal(k)) as [
     z.ZodLiteral<string>,
     ...z.ZodLiteral<string>[],
   ],
 );
 const AttenduEnum = z.union(
-  (Object.keys(ATTENDU_LABELS) as string[]).map((k) => z.literal(k)) as [
+  (CONTROLLED_ATTENDUS as readonly string[]).map((k) => z.literal(k)) as [
     z.ZodLiteral<string>,
     ...z.ZodLiteral<string>[],
   ],

@@ -1,5 +1,10 @@
 ﻿//app/api/sweet-spot/projects/route.ts
 import { NextResponse } from 'next/server';
+// Use controlled vocab (machine keys) as pools for fallback suggestions
+import {
+  FORMATIONS as CONTROLLED_FORMATIONS,
+  ATTENDUS as CONTROLLED_ATTENDUS,
+} from '@/data/controlled-vocab';
 import {
   HybridProjectGenerationResponseSchema,
   HybridProjectSchema,
@@ -15,6 +20,11 @@ import {
 } from '@/lib/normalizers';
 import type { EmergingCareerBatch3 } from '@/data/emerging-careers-batch3';
 import type { FormationKey, AttenduKey } from '@/data/controlled-vocab';
+
+// Use the controlled vocab arrays as pools for fallback suggestions — they
+// already contain the canonical machine keys (FormationKey / AttenduKey).
+const FORMATIONS_POOL = CONTROLLED_FORMATIONS as unknown as FormationKey[];
+const ATTENDUS_POOL = CONTROLLED_ATTENDUS as unknown as AttenduKey[];
 
 type Keywords4D = {
   passions: string[];
@@ -142,6 +152,16 @@ function padList(list: string[], fallback: string[], minimum: number): string[] 
 function pickKeyword(keywords: string[], index: number, fallback: string): string {
   if (!keywords.length) return fallback;
   return keywords[index % keywords.length];
+}
+
+function ensureMinCount<T extends string>(list: T[], min: number, pool: readonly T[]): T[] {
+  if (list.length >= min) return list.slice(0, Math.max(min, list.length));
+  const set = new Set(list);
+  for (const item of pool) {
+    set.add(item as T);
+    if (set.size >= min) break;
+  }
+  return Array.from(set).slice(0, Math.max(min, list.length));
 }
 
 function buildProject(

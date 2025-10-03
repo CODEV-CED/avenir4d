@@ -207,7 +207,9 @@ export class HybridProjectGenerator {
       projects.push(this.genericProject(projects.length, seed));
     }
 
-    return projects.slice(0, 5);
+    const normalizedProjects = this.withUniqueProjectIds(projects);
+
+    return normalizedProjects.slice(0, 5);
   }
 
   private remapKeysFromAI(payload: any): Partial<HybridProject> {
@@ -300,7 +302,7 @@ export class HybridProjectGenerator {
       projects.push(this.genericProject(i, seed, userKeywords, convergences));
     }
 
-    return projects;
+    return this.withUniqueProjectIds(projects);
   }
 
   private genericProject(
@@ -374,6 +376,30 @@ export class HybridProjectGenerator {
 
     const validated = HybridProjectSchema.safeParse(project);
     return validated.success ? validated.data : project;
+  }
+
+  private withUniqueProjectIds(projects: HybridProject[]): HybridProject[] {
+    const seen = new Map<string, number>();
+
+    return projects.map((project) => {
+      const baseId = project.id?.trim().length
+        ? project.id.trim()
+        : generateProjectKey(
+            project.title,
+            project.suggestedFormations as FormationKey[],
+            project.difficulty as 'facile' | 'medium' | 'ambitieux',
+          );
+
+      const occurrence = seen.get(baseId) ?? 0;
+      seen.set(baseId, occurrence + 1);
+
+      if (occurrence === 0) {
+        return baseId === project.id ? project : { ...project, id: baseId };
+      }
+
+      const uniqueId = `${baseId}_${(occurrence + 1).toString(36)}`;
+      return { ...project, id: uniqueId };
+    });
   }
 
   private generateCacheKey(

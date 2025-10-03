@@ -1,9 +1,10 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 import path from 'path'; // Importation nécessaire
 
 export default defineConfig({
-  plugins: [react()],
+  // Note: removed @vitejs/plugin-react (ESM-only) because esbuild used by Vitest
+  // cannot require() ESM-only modules in this environment. Tests don't need
+  // this plugin to run; Vite's default transformers are sufficient for most cases.
   test: {
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
